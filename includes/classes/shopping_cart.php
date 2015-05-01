@@ -200,14 +200,7 @@
 			$Qproduct_Query = tep_db_query("select p.parent_id, p.products_price, p.products_tax_class_id, p.products_model, p.products_weight, p.products_weight_class, p.products_status, i.image from products p left join products_images i on (p.products_id = i.products_id and i.default_flag = '1') where p.products_id = '" . (int)$product_id . "'");
 			$Qproduct = tep_db_fetch_array($Qproduct_Query);
 		
-			if($Qproduct['parent_id'] > 0){
-				$product_id = $Qproduct['parent_id'];
-			}else{
-				$product_id = $product_id;
-			}			
-			
-			$Qimage_Query = tep_db_query("select image from products_images where products_id = '" . (int)$product_id . "' and default_flag = '1'");
-			$Qimage = tep_db_fetch_array($Qimage_Query);
+
 			
 			
 			if ( $Qproduct['products_status'] == 1 ) {
@@ -228,6 +221,15 @@
 					if ( !is_numeric($quantity) ) {
 						$quantity = 1;
 					}
+					
+					if($Qproduct['parent_id'] > 0){
+						$product_id = $Qproduct['parent_id'];
+					}else{
+						$product_id = $product_id;
+					}			
+					
+					$Qimage_Query = tep_db_query("select image from products_images where products_id = '" . (int)$product_id . "' and default_flag = '1'");
+					$Qimage = tep_db_fetch_array($Qimage_Query);
 					
 					$Qdescription_Query = tep_db_query("select products_name, products_keyword from products_description where products_id = '" . (int)$product_id . "' and language_id = '" . (int)$languages_id . "'");
 					$Qdescription = tep_db_fetch_array($Qdescription_Query);
@@ -300,7 +302,7 @@
 				$this->cleanup();
 				$this->calculate();
 				// assign a temporary unique ID to the order contents to prevent hack attempts during the checkout procedure
-				$this->cartID = $this->generate_cart_id();				
+				//$this->cartID = $this->generate_cart_id();				
 			}
 		}
 		
