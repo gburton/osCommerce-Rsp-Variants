@@ -26,7 +26,7 @@
 
         $string .= '  <tr>' .
                    '    <th>' . $field['text'] . ':</th>' .
-                   '    <td>' . tep_draw_input_field('variants[' . $data['group_id'] . '][' . $field['id'] . ']', null, 'id="variants_' . $data['group_id'] . '_' . $i . '"') . '</td>' .
+                   '    <td>' . tep_draw_input_field('variants[' . $data['group_id'] . '][' . $field['id'] . ']', null, 'id="variants_' . $data['group_id'] . '_' . $i . '" required') . '</td>' .
                    '  </tr>';
       }
 
