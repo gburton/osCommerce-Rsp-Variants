@@ -94,12 +94,15 @@ function refreshVariants() {
   }
 
   if (id != null) {
+	$('button.add-cart').prop('disabled', false);	
     $('#productInfoAvailability').parent().removeClass('danger');
 
     price = combos[id]['price'];
     availability = productInfoAvailability;
     model = combos[id]['model'];
   } else {
+	
+	$('button.add-cart').prop('disabled', true);	
 	$('#productInfoAvailability').parent().addClass('danger');
     
 	price = originalPrice;

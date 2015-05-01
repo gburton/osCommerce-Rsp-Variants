@@ -65,7 +65,7 @@
 						foreach ( $data['variants'] as $variant ) {
 							if ( $variant['has_custom_value'] === true ) {
 								
-								tep_db_query("insert into shopping_carts_custom_variants_values (shopping_carts_item_id, customers_id, products_id, products_variants_values_id, products_variants_values_text) values ('" . (int)$db_item_id . "', '" . (int)$customer_id . "', '" . (int)$data['id'] . "', '" . (int)$variant['value_id'] . "', '" . $variant['value_title'] . "')");
+								tep_db_query("insert into shopping_carts_custom_variants_values (shopping_carts_item_id, customers_id, products_id, products_variants_values_id, products_variants_values_text) values ('" . (int)$db_item_id . "', '" . (int)$customer_id . "', '" . (int)$data['id'] . "', '" . (int)$variant['value_id'] . "', '" . tep_db_prepare_input( $variant['value_title'] ) . "')");
 
 							}
 						}
@@ -200,14 +200,7 @@
 			$Qproduct_Query = tep_db_query("select p.parent_id, p.products_price, p.products_tax_class_id, p.products_model, p.products_weight, p.products_weight_class, p.products_status, i.image from products p left join products_images i on (p.products_id = i.products_id and i.default_flag = '1') where p.products_id = '" . (int)$product_id . "'");
 			$Qproduct = tep_db_fetch_array($Qproduct_Query);
 		
-			if($Qproduct['parent_id'] > 0){
-				$product_id = $Qproduct['parent_id'];
-			}else{
-				$product_id = $product_id;
-			}			
-			
-			$Qimage_Query = tep_db_query("select image from products_images where products_id = '" . (int)$product_id . "' and default_flag = '1'");
-			$Qimage = tep_db_fetch_array($Qimage_Query);
+
 			
 			
 			if ( $Qproduct['products_status'] == 1 ) {
@@ -228,6 +221,15 @@
 					if ( !is_numeric($quantity) ) {
 						$quantity = 1;
 					}
+					
+					if($Qproduct['parent_id'] > 0){
+						$product_id = $Qproduct['parent_id'];
+					}else{
+						$product_id = $product_id;
+					}			
+					
+					$Qimage_Query = tep_db_query("select image from products_images where products_id = '" . (int)$product_id . "' and default_flag = '1'");
+					$Qimage = tep_db_fetch_array($Qimage_Query);
 					
 					$Qdescription_Query = tep_db_query("select products_name, products_keyword from products_description where products_id = '" . (int)$product_id . "' and language_id = '" . (int)$languages_id . "'");
 					$Qdescription = tep_db_fetch_array($Qdescription_Query);
@@ -288,7 +290,7 @@
 							'has_custom_value' => $has_custom_value);
 							
 							if ( tep_session_is_registered('customer_id') && ($has_custom_value === true) ) {
-								$Qnew_Query = tep_db_query("insert into shopping_carts_custom_variants_values (shopping_carts_item_id, customers_id, products_id, products_variants_values_id, products_variants_values_text) values ('" . (int)$item_id . "', '" . (int)$customer_id . "', '" . (int)$product_variant_id . "', '" . $Qvariant['value_id'] . "', '" . $value_title . "')");
+								$Qnew_Query = tep_db_query("insert into shopping_carts_custom_variants_values (shopping_carts_item_id, customers_id, products_id, products_variants_values_id, products_variants_values_text) values ('" . (int)$item_id . "', '" . (int)$customer_id . "', '" . (int)$product_variant_id . "', '" . $Qvariant['value_id'] . "', '" . tep_db_prepare_input( $value_title ) . "')");
 
 							}
 							
@@ -300,7 +302,7 @@
 				$this->cleanup();
 				$this->calculate();
 				// assign a temporary unique ID to the order contents to prevent hack attempts during the checkout procedure
-				$this->cartID = $this->generate_cart_id();				
+				//$this->cartID = $this->generate_cart_id();				
 			}
 		}
 		
@@ -333,7 +335,8 @@
 			
 			return false;
 		}
-		
+		/*
+		//Depricated
 		function update_quantity($products_id, $quantity = '') {
 			global $customer_id;
 			
@@ -354,6 +357,24 @@
 				$this->cartID = $this->generate_cart_id();
 			}
 		}
+		*/
+		public function update($item_id, $quantity) {
+			global $customer_id;
+			
+			if ( !is_numeric($quantity) ) {
+				$quantity = $this->getQuantity($item_id) + 1;
+			}
+			
+			$this->contents[$item_id]['quantity'] = $quantity;
+			
+			if ( tep_session_is_registered('customer_id') ) {
+				tep_db_query("update customers_basket set quantity = '" . (int)$quantity . "' where customers_id = '" . (int)$customer_id . "' and item_id = '" . (int)$item_id . "'");
+			}
+			
+			$this->cleanup();
+			$this->calculate();
+		}
+		
 		private function cleanup() {
 			global $customer_id;
 			
