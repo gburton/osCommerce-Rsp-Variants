@@ -65,7 +65,7 @@
 						foreach ( $data['variants'] as $variant ) {
 							if ( $variant['has_custom_value'] === true ) {
 								
-								tep_db_query("insert into shopping_carts_custom_variants_values (shopping_carts_item_id, customers_id, products_id, products_variants_values_id, products_variants_values_text) values ('" . (int)$db_item_id . "', '" . (int)$customer_id . "', '" . (int)$data['id'] . "', '" . (int)$variant['value_id'] . "', '" . $variant['value_title'] . "')");
+								tep_db_query("insert into shopping_carts_custom_variants_values (shopping_carts_item_id, customers_id, products_id, products_variants_values_id, products_variants_values_text) values ('" . (int)$db_item_id . "', '" . (int)$customer_id . "', '" . (int)$data['id'] . "', '" . (int)$variant['value_id'] . "', '" . tep_db_prepare_input( $variant['value_title'] ) . "')");
 
 							}
 						}
@@ -290,7 +290,7 @@
 							'has_custom_value' => $has_custom_value);
 							
 							if ( tep_session_is_registered('customer_id') && ($has_custom_value === true) ) {
-								$Qnew_Query = tep_db_query("insert into shopping_carts_custom_variants_values (shopping_carts_item_id, customers_id, products_id, products_variants_values_id, products_variants_values_text) values ('" . (int)$item_id . "', '" . (int)$customer_id . "', '" . (int)$product_variant_id . "', '" . $Qvariant['value_id'] . "', '" . $value_title . "')");
+								$Qnew_Query = tep_db_query("insert into shopping_carts_custom_variants_values (shopping_carts_item_id, customers_id, products_id, products_variants_values_id, products_variants_values_text) values ('" . (int)$item_id . "', '" . (int)$customer_id . "', '" . (int)$product_variant_id . "', '" . $Qvariant['value_id'] . "', '" . tep_db_prepare_input( $value_title ) . "')");
 
 							}
 							
