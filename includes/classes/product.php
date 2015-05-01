@@ -54,8 +54,8 @@
 							$this->_data = array_merge($this->_data, $Qdesc);
 						}
 					}
-					} else {
-					$Qproduct_Query = tep_db_query("select p.products_id as id, p.parent_id, p.products_quantity as quantity, p.products_price as price, p.products_model as model, p.products_tax_class_id as tax_class_id, p.products_weight as weight, p.products_weight_class as weight_class_id, p.products_date_added as date_added, p.manufacturers_id, p.has_children, pd.products_name as name, pd.products_description as description, pd.products_keyword as keyword, pd.products_tags as tags, pd.products_url as url from products p, products_description pd where pd.products_keyword = '" . (int)$id . "' and pd.language_id = '" . (int)$languages_id . "' and pd.products_id = p.products_id and p.products_status = '1'");
+				} else {
+					$Qproduct_Query = tep_db_query("select p.products_id as id, p.parent_id, p.products_quantity as quantity, p.products_price as price, p.products_model as model, p.products_tax_class_id as tax_class_id, p.products_weight as weight, p.products_weight_class as weight_class_id, p.products_date_added as date_added, p.manufacturers_id, p.has_children, pd.products_name as name, pd.products_description as description, pd.products_keyword as keyword, pd.products_tags as tags, pd.products_url as url from products p, products_description pd where pd.products_keyword = '" . $id . "' and pd.language_id = '" . (int)$languages_id . "' and pd.products_id = p.products_id and p.products_status = '1'");
 					$Qproduct = tep_db_fetch_array($Qproduct_Query);
 					
 					if (tep_db_num_rows($Qproduct_Query) === 1) {
@@ -443,26 +443,21 @@
 				return call_user_func(array('osC_ProductAttributes_' . $code, 'getValue'), $this->_data['attributes'][$code]);
 			}
 		}
-		
 		function checkEntry($id) {
-			global $osC_Database;
-			
-			$Qproduct = $osC_Database->query('select p.products_id from :table_products p');
-			$Qproduct->bindTable(':table_products', TABLE_PRODUCTS);
 			
 			if ( is_numeric($id) ) {
-				$Qproduct->appendQuery('where p.products_id = :products_id');
-				$Qproduct->bindInt(':products_id', $id);
-				} else {
-				$Qproduct->appendQuery(', :table_products_description pd where pd.products_keyword = :products_keyword and pd.products_id = p.products_id');
-				$Qproduct->bindTable(':table_products_description', TABLE_PRODUCTS_DESCRIPTION);
-				$Qproduct->bindValue(':products_keyword', $id);
+				
+				$Qproduct_Query = tep_db_query("select p.products_id from products p where p.products_id = '" . (int)$id . "' and p.products_status = 1 limit 1");
+
+			} else {
+				
+				$Qproduct_Query = tep_db_query("select p.products_id from products p, products_description pd where pd.products_keyword = '" . $id . "' and pd.products_id = p.products_id and p.products_status = 1 limit 1");
+			
 			}
 			
-			$Qproduct->appendQuery('and p.products_status = 1 limit 1');
-			$Qproduct->execute();
+			$Qproduct = tep_db_fetch_array($Qproduct_Query);			
 			
-			return ( $Qproduct->numberOfRows() === 1 );
+			return ( tep_db_num_rows($Qproduct_Query) === 1 );
 		}
 		
 		function incrementCounter() {
