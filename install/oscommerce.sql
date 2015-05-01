@@ -12,6 +12,7 @@
 #       * Please take note of the table structure, and use this
 #         structure as a standard for future modifications!
 
+
 DROP TABLE IF EXISTS action_recorder;
 CREATE TABLE action_recorder (
   id int NOT NULL auto_increment,
@@ -187,23 +188,13 @@ DROP TABLE IF EXISTS customers_basket;
 CREATE TABLE customers_basket (
   customers_basket_id int NOT NULL auto_increment,
   customers_id int NOT NULL,
+  item_id smallint(6) NOT NULL,
   products_id tinytext NOT NULL,
-  customers_basket_quantity int(2) NOT NULL,
-  final_price decimal(15,4),
-  customers_basket_date_added char(8),
+  quantity int(2) NOT NULL,
+  final_price decimal(15,4) DEFAULT NULL,
+  date_added char(8) DEFAULT NULL,
   PRIMARY KEY (customers_basket_id),
   KEY idx_customers_basket_customers_id (customers_id)
-) CHARACTER SET utf8 COLLATE utf8_unicode_ci;
-
-DROP TABLE IF EXISTS customers_basket_attributes;
-CREATE TABLE customers_basket_attributes (
-  customers_basket_attributes_id int NOT NULL auto_increment,
-  customers_id int NOT NULL,
-  products_id tinytext NOT NULL,
-  products_options_id int NOT NULL,
-  products_options_value_id int NOT NULL,
-  PRIMARY KEY (customers_basket_attributes_id),
-  KEY idx_customers_basket_att_customers_id (customers_id)
 ) CHARACTER SET utf8 COLLATE utf8_unicode_ci;
 
 DROP TABLE IF EXISTS customers_info;
@@ -217,6 +208,16 @@ CREATE TABLE customers_info (
   password_reset_key char(40),
   password_reset_date datetime,
   PRIMARY KEY (customers_info_id)
+) CHARACTER SET utf8 COLLATE utf8_unicode_ci;
+
+DROP TABLE IF EXISTS geo_zones;
+CREATE TABLE geo_zones (
+  geo_zone_id int NOT NULL auto_increment,
+  geo_zone_name varchar(32) NOT NULL,
+  geo_zone_description varchar(255) NOT NULL,
+  last_modified datetime DEFAULT NULL,
+  date_added datetime NOT NULL,
+  PRIMARY KEY (geo_zone_id)
 ) CHARACTER SET utf8 COLLATE utf8_unicode_ci;
 
 DROP TABLE IF EXISTS languages;
@@ -329,29 +330,6 @@ CREATE TABLE orders_products (
   KEY idx_orders_products_products_id (products_id)
 ) CHARACTER SET utf8 COLLATE utf8_unicode_ci;
 
-DROP TABLE IF EXISTS orders_status;
-CREATE TABLE orders_status (
-   orders_status_id int DEFAULT '0' NOT NULL,
-   language_id int DEFAULT '1' NOT NULL,
-   orders_status_name varchar(32) NOT NULL,
-   public_flag int DEFAULT '1',
-   downloads_flag int DEFAULT '0',
-   PRIMARY KEY (orders_status_id, language_id),
-   KEY idx_orders_status_name (orders_status_name)
-) CHARACTER SET utf8 COLLATE utf8_unicode_ci;
-
-DROP TABLE IF EXISTS orders_status_history;
-CREATE TABLE orders_status_history (
-   orders_status_history_id int NOT NULL auto_increment,
-   orders_id int NOT NULL,
-   orders_status_id int(5) NOT NULL,
-   date_added datetime NOT NULL,
-   customer_notified int(1) DEFAULT '0',
-   comments text,
-   PRIMARY KEY (orders_status_history_id),
-   KEY idx_orders_status_history_orders_id (orders_id)
-) CHARACTER SET utf8 COLLATE utf8_unicode_ci;
-
 DROP TABLE IF EXISTS orders_products_attributes;
 CREATE TABLE orders_products_attributes (
   orders_products_attributes_id int NOT NULL auto_increment,
@@ -377,6 +355,40 @@ CREATE TABLE orders_products_download (
   KEY idx_orders_products_download_orders_id (orders_id)
 ) CHARACTER SET utf8 COLLATE utf8_unicode_ci;
 
+DROP TABLE IF EXISTS orders_products_variants;
+CREATE TABLE orders_products_variants (
+  id int NOT NULL auto_increment,
+  orders_id int NOT NULL,
+  orders_products_id int NOT NULL,
+  group_title varchar(255) NOT NULL,
+  value_title text NOT NULL,
+  PRIMARY KEY (id),
+  KEY idx_orders_products_variants_orders_products_ids (orders_id,orders_products_id)
+) CHARACTER SET utf8 COLLATE utf8_unicode_ci;
+
+DROP TABLE IF EXISTS orders_status;
+CREATE TABLE orders_status (
+  orders_status_id int NOT NULL DEFAULT '0',
+  language_id int NOT NULL DEFAULT '1',
+  orders_status_name varchar(32) NOT NULL,
+  public_flag int DEFAULT '1',
+  downloads_flag int DEFAULT '0',
+  PRIMARY KEY (orders_status_id,language_id),
+  KEY idx_orders_status_name (orders_status_name)
+) CHARACTER SET utf8 COLLATE utf8_unicode_ci;
+
+DROP TABLE IF EXISTS orders_status_history;
+CREATE TABLE orders_status_history (
+  orders_status_history_id int NOT NULL auto_increment,
+  orders_id int NOT NULL,
+  orders_status_id int(5) NOT NULL,
+  date_added datetime NOT NULL,
+  customer_notified int(1) DEFAULT '0',
+  comments text COLLATE utf8_unicode_ci,
+  PRIMARY KEY (orders_status_history_id),
+  KEY idx_orders_status_history_orders_id (orders_id)
+) CHARACTER SET utf8 COLLATE utf8_unicode_ci;
+
 DROP TABLE IF EXISTS orders_total;
 CREATE TABLE orders_total (
   orders_total_id int unsigned NOT NULL auto_increment,
@@ -393,62 +405,46 @@ CREATE TABLE orders_total (
 DROP TABLE IF EXISTS products;
 CREATE TABLE products (
   products_id int NOT NULL auto_increment,
-  products_quantity int(4) NOT NULL,
-  products_model varchar(64),
-  products_image varchar(64),
+  parent_id int NOT NULL DEFAULT '0',
+  products_quantity int NOT NULL,
   products_price decimal(15,4) NOT NULL,
+  products_model varchar(255) NOT NULL,
   products_date_added datetime NOT NULL,
-  products_last_modified datetime,
-  products_date_available datetime,
+  products_last_modified datetime DEFAULT NULL,
   products_weight decimal(5,2) NOT NULL,
+  products_weight_class int NOT NULL,
   products_status tinyint(1) NOT NULL,
   products_tax_class_id int NOT NULL,
-  manufacturers_id int NULL,
-  products_ordered int NOT NULL default '0',
+  manufacturers_id int DEFAULT NULL,
+  products_ordered int NOT NULL DEFAULT '0',
+  has_children int DEFAULT '0',
+  products_date_available datetime DEFAULT NULL,
   PRIMARY KEY (products_id),
-  KEY idx_products_model (products_model),
   KEY idx_products_date_added (products_date_added)
-) CHARACTER SET utf8 COLLATE utf8_unicode_ci;
-
-DROP TABLE IF EXISTS products_attributes;
-CREATE TABLE products_attributes (
-  products_attributes_id int NOT NULL auto_increment,
-  products_id int NOT NULL,
-  options_id int NOT NULL,
-  options_values_id int NOT NULL,
-  options_values_price decimal(15,4) NOT NULL,
-  price_prefix char(1) NOT NULL,
-  PRIMARY KEY (products_attributes_id),
-  KEY idx_products_attributes_products_id (products_id)
-) CHARACTER SET utf8 COLLATE utf8_unicode_ci;
-
-DROP TABLE IF EXISTS products_attributes_download;
-CREATE TABLE products_attributes_download (
-  products_attributes_id int NOT NULL,
-  products_attributes_filename varchar(255) NOT NULL default '',
-  products_attributes_maxdays int(2) default '0',
-  products_attributes_maxcount int(2) default '0',
-  PRIMARY KEY  (products_attributes_id)
 ) CHARACTER SET utf8 COLLATE utf8_unicode_ci;
 
 DROP TABLE IF EXISTS products_description;
 CREATE TABLE products_description (
   products_id int NOT NULL auto_increment,
-  language_id int NOT NULL default '1',
-  products_name varchar(64) NOT NULL default '',
-  products_description text,
-  products_url varchar(255) default NULL,
-  products_viewed int(5) default '0',
-  PRIMARY KEY  (products_id,language_id),
-  KEY products_name (products_name)
+  language_id int NOT NULL DEFAULT '1',
+  products_name varchar(255) NOT NULL DEFAULT '',
+  products_description text COLLATE utf8_unicode_ci,
+  products_keyword varchar(255) DEFAULT NULL,
+  products_tags varchar(255) DEFAULT NULL,
+  products_url varchar(255) DEFAULT NULL,
+  products_viewed int DEFAULT '0',
+  PRIMARY KEY (products_id,language_id),
+  KEY products_name (products_name),
+  KEY products_description_keyword (products_keyword)
 ) CHARACTER SET utf8 COLLATE utf8_unicode_ci;
 
 DROP TABLE IF EXISTS products_images;
 CREATE TABLE products_images (
   id int NOT NULL auto_increment,
   products_id int NOT NULL,
-  image varchar(64),
-  htmlcontent text,
+  image varchar(64) DEFAULT NULL,
+  htmlcontent text COLLATE utf8_unicode_ci,
+  default_flag tinyint(4) NOT NULL,
   sort_order int NOT NULL,
   PRIMARY KEY (id),
   KEY products_images_prodid (products_id)
@@ -459,31 +455,7 @@ CREATE TABLE products_notifications (
   products_id int NOT NULL,
   customers_id int NOT NULL,
   date_added datetime NOT NULL,
-  PRIMARY KEY (products_id, customers_id)
-) CHARACTER SET utf8 COLLATE utf8_unicode_ci;
-
-DROP TABLE IF EXISTS products_options;
-CREATE TABLE products_options (
-  products_options_id int NOT NULL default '0',
-  language_id int NOT NULL default '1',
-  products_options_name varchar(32) NOT NULL default '',
-  PRIMARY KEY  (products_options_id,language_id)
-) CHARACTER SET utf8 COLLATE utf8_unicode_ci;
-
-DROP TABLE IF EXISTS products_options_values;
-CREATE TABLE products_options_values (
-  products_options_values_id int NOT NULL default '0',
-  language_id int NOT NULL default '1',
-  products_options_values_name varchar(64) NOT NULL default '',
-  PRIMARY KEY  (products_options_values_id,language_id)
-) CHARACTER SET utf8 COLLATE utf8_unicode_ci;
-
-DROP TABLE IF EXISTS products_options_values_to_products_options;
-CREATE TABLE products_options_values_to_products_options (
-  products_options_values_to_products_options_id int NOT NULL auto_increment,
-  products_options_id int NOT NULL,
-  products_options_values_id int NOT NULL,
-  PRIMARY KEY (products_options_values_to_products_options_id)
+  PRIMARY KEY (products_id,customers_id)
 ) CHARACTER SET utf8 COLLATE utf8_unicode_ci;
 
 DROP TABLE IF EXISTS products_to_categories;
@@ -491,6 +463,45 @@ CREATE TABLE products_to_categories (
   products_id int NOT NULL,
   categories_id int NOT NULL,
   PRIMARY KEY (products_id,categories_id)
+) DEFAULT CHARSET=latin1;
+
+DROP TABLE IF EXISTS products_variants;
+CREATE TABLE products_variants (
+  products_id int(10) unsigned NOT NULL,
+  products_variants_values_id int(10) unsigned NOT NULL,
+  default_combo tinyint(3) unsigned DEFAULT '0',
+  PRIMARY KEY (products_id,products_variants_values_id)
+) CHARACTER SET utf8 COLLATE utf8_unicode_ci;
+
+DROP TABLE IF EXISTS products_variants_groups;
+CREATE TABLE products_variants_groups (
+  id int NOT NULL auto_increment,
+  languages_id int NOT NULL,
+  title varchar(255) NOT NULL,
+  sort_order int NOT NULL,
+  module varchar(255) NOT NULL,
+  PRIMARY KEY (id,languages_id)
+) CHARACTER SET utf8 COLLATE utf8_unicode_ci;
+
+DROP TABLE IF EXISTS products_variants_values;
+CREATE TABLE products_variants_values (
+  id int NOT NULL auto_increment,
+  languages_id int NOT NULL,
+  products_variants_groups_id int NOT NULL,
+  title varchar(255) NOT NULL,
+  sort_order int NOT NULL,
+  PRIMARY KEY (id,languages_id),
+  KEY idx_products_variants_values_groups_id (products_variants_groups_id)
+) CHARACTER SET utf8 COLLATE utf8_unicode_ci;
+
+DROP TABLE IF EXISTS product_attributes;
+CREATE TABLE product_attributes (
+  id int(10) unsigned NOT NULL,
+  products_id int(10) unsigned NOT NULL,
+  languages_id int(10) unsigned NOT NULL,
+  `value` text NOT NULL,
+  KEY idx_pa_id_products_id (id,products_id),
+  KEY idx_pa_languages_id (languages_id)
 ) CHARACTER SET utf8 COLLATE utf8_unicode_ci;
 
 DROP TABLE IF EXISTS reviews;
@@ -514,7 +525,7 @@ CREATE TABLE reviews_description (
   reviews_id int NOT NULL,
   languages_id int NOT NULL,
   reviews_text text NOT NULL,
-  PRIMARY KEY (reviews_id, languages_id)
+  PRIMARY KEY (reviews_id,languages_id)
 ) CHARACTER SET utf8 COLLATE utf8_unicode_ci;
 
 DROP TABLE IF EXISTS sec_directory_whitelist;
@@ -530,6 +541,25 @@ CREATE TABLE sessions (
   expiry int(11) unsigned NOT NULL,
   value text NOT NULL,
   PRIMARY KEY (sesskey)
+) CHARACTER SET utf8 COLLATE utf8_unicode_ci;
+
+DROP TABLE IF EXISTS shipping_availability;
+CREATE TABLE shipping_availability (
+  id int(10) unsigned NOT NULL,
+  languages_id int(10) unsigned NOT NULL,
+  title varchar(255) NOT NULL,
+  css_key varchar(255) DEFAULT NULL,
+  PRIMARY KEY (id,languages_id)
+) DEFAULT CHARSET=latin1;
+
+DROP TABLE IF EXISTS shopping_carts_custom_variants_values;
+CREATE TABLE shopping_carts_custom_variants_values (
+  shopping_carts_item_id smallint(5) unsigned NOT NULL,
+  customers_id int(10) unsigned NOT NULL,
+  products_id int(10) unsigned NOT NULL,
+  products_variants_values_id int(10) unsigned NOT NULL,
+  products_variants_values_text text NOT NULL,
+  KEY idx_sccvv_customers_id_products_id (customers_id,products_id)
 ) CHARACTER SET utf8 COLLATE utf8_unicode_ci;
 
 DROP TABLE IF EXISTS specials;
@@ -569,14 +599,15 @@ CREATE TABLE tax_rates (
   PRIMARY KEY (tax_rates_id)
 ) CHARACTER SET utf8 COLLATE utf8_unicode_ci;
 
-DROP TABLE IF EXISTS geo_zones;
-CREATE TABLE geo_zones (
-  geo_zone_id int NOT NULL auto_increment,
-  geo_zone_name varchar(32) NOT NULL,
-  geo_zone_description varchar(255) NOT NULL,
-  last_modified datetime NULL,
-  date_added datetime NOT NULL,
-  PRIMARY KEY (geo_zone_id)
+DROP TABLE IF EXISTS templates_boxes;
+CREATE TABLE templates_boxes (
+  id int NOT NULL auto_increment,
+  title varchar(255) NOT NULL,
+  `code` varchar(255) NOT NULL,
+  author_name varchar(255) NOT NULL,
+  author_www varchar(255) DEFAULT NULL,
+  modules_group varchar(255) NOT NULL,
+  PRIMARY KEY (id)
 ) CHARACTER SET utf8 COLLATE utf8_unicode_ci;
 
 DROP TABLE IF EXISTS whos_online;
@@ -603,14 +634,14 @@ CREATE TABLE zones (
 
 DROP TABLE IF EXISTS zones_to_geo_zones;
 CREATE TABLE zones_to_geo_zones (
-   association_id int NOT NULL auto_increment,
-   zone_country_id int NOT NULL,
+  association_id int NOT NULL auto_increment,
+  zone_country_id int NOT NULL,
    zone_id int NULL,
    geo_zone_id int NULL,
    last_modified datetime NULL,
-   date_added datetime NOT NULL,
-   PRIMARY KEY (association_id),
-   KEY idx_zones_to_geo_zones_country_id (zone_country_id)
+  date_added datetime NOT NULL,
+  PRIMARY KEY (association_id),
+  KEY idx_zones_to_geo_zones_country_id (zone_country_id)
 ) CHARACTER SET utf8 COLLATE utf8_unicode_ci;
 
 # data
@@ -624,49 +655,15 @@ INSERT INTO address_format VALUES (5, '$firstname $lastname$cr$streets$cr$postco
 
 INSERT INTO banners VALUES (1, 'osCommerce', 'http://www.oscommerce.com', 'banners/oscommerce.gif', 'footer', '', 0, null, null, now(), null, 1);
 
-INSERT INTO categories VALUES ('1', 'category_hardware.gif', '0', '1', now(), null);
-INSERT INTO categories VALUES ('2', 'category_software.gif', '0', '2', now(), null);
-INSERT INTO categories VALUES ('3', 'category_dvd_movies.gif', '0', '3', now(), null);
-INSERT INTO categories VALUES ('4', 'subcategory_graphic_cards.gif', '1', '0', now(), null);
-INSERT INTO categories VALUES ('5', 'subcategory_printers.gif', '1', '0', now(), null);
-INSERT INTO categories VALUES ('6', 'subcategory_monitors.gif', '1', '0', now(), null);
-INSERT INTO categories VALUES ('7', 'subcategory_speakers.gif', '1', '0', now(), null);
-INSERT INTO categories VALUES ('8', 'subcategory_keyboards.gif', '1', '0', now(), null);
-INSERT INTO categories VALUES ('9', 'subcategory_mice.gif', '1', '0', now(), null);
-INSERT INTO categories VALUES ('10', 'subcategory_action.gif', '3', '0', now(), null);
-INSERT INTO categories VALUES ('11', 'subcategory_science_fiction.gif', '3', '0', now(), null);
-INSERT INTO categories VALUES ('12', 'subcategory_comedy.gif', '3', '0', now(), null);
-INSERT INTO categories VALUES ('13', 'subcategory_cartoons.gif', '3', '0', now(), null);
-INSERT INTO categories VALUES ('14', 'subcategory_thriller.gif', '3', '0', now(), null);
-INSERT INTO categories VALUES ('15', 'subcategory_drama.gif', '3', '0', now(), null);
-INSERT INTO categories VALUES ('16', 'subcategory_memory.gif', '1', '0', now(), null);
-INSERT INTO categories VALUES ('17', 'subcategory_cdrom_drives.gif', '1', '0', now(), null);
-INSERT INTO categories VALUES ('18', 'subcategory_simulation.gif', '2', '0', now(), null);
-INSERT INTO categories VALUES ('19', 'subcategory_action_games.gif', '2', '0', now(), null);
-INSERT INTO categories VALUES ('20', 'subcategory_strategy.gif', '2', '0', now(), null);
-INSERT INTO categories VALUES ('21', 'category_gadgets.png', '0', '4', now(), null);
+INSERT INTO categories VALUES(1, 'books.gif', 0, 1, '2015-02-24 23:10:25', NULL);
+INSERT INTO categories VALUES(2, 'php.gif', 1, 1, '2015-02-24 23:10:25', NULL);
+INSERT INTO categories VALUES(3, '', 0, 2, '2015-02-24 23:10:25', NULL);
+INSERT INTO categories VALUES(4, '', 0, 3, '2015-02-24 23:10:25', NULL);
 
-INSERT INTO categories_description VALUES ( '1', '1', 'Hardware');
-INSERT INTO categories_description VALUES ( '2', '1', 'Software');
-INSERT INTO categories_description VALUES ( '3', '1', 'DVD Movies');
-INSERT INTO categories_description VALUES ( '4', '1', 'Graphics Cards');
-INSERT INTO categories_description VALUES ( '5', '1', 'Printers');
-INSERT INTO categories_description VALUES ( '6', '1', 'Monitors');
-INSERT INTO categories_description VALUES ( '7', '1', 'Speakers');
-INSERT INTO categories_description VALUES ( '8', '1', 'Keyboards');
-INSERT INTO categories_description VALUES ( '9', '1', 'Mice');
-INSERT INTO categories_description VALUES ( '10', '1', 'Action');
-INSERT INTO categories_description VALUES ( '11', '1', 'Science Fiction');
-INSERT INTO categories_description VALUES ( '12', '1', 'Comedy');
-INSERT INTO categories_description VALUES ( '13', '1', 'Cartoons');
-INSERT INTO categories_description VALUES ( '14', '1', 'Thriller');
-INSERT INTO categories_description VALUES ( '15', '1', 'Drama');
-INSERT INTO categories_description VALUES ( '16', '1', 'Memory');
-INSERT INTO categories_description VALUES ( '17', '1', 'CDROM Drives');
-INSERT INTO categories_description VALUES ( '18', '1', 'Simulation');
-INSERT INTO categories_description VALUES ( '19', '1', 'Action');
-INSERT INTO categories_description VALUES ( '20', '1', 'Strategy');
-INSERT INTO categories_description VALUES ( '21', '1', 'Gadgets');
+INSERT INTO categories_description VALUES(1, 1, 'Books');
+INSERT INTO categories_description VALUES(3, 1, 'Gadgets');
+INSERT INTO categories_description VALUES(4, 1, 'Merchandise');
+INSERT INTO categories_description VALUES(2, 1, 'PHP');
 
 INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) VALUES ('Store Name', 'STORE_NAME', 'osCommerce', 'The name of my store', '1', '1', now());
 INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) VALUES ('Store Owner', 'STORE_OWNER', 'Harald Ponce de Leon', 'The name of my store owner', '1', '2', now());
@@ -1110,7 +1107,7 @@ INSERT INTO countries VALUES (238,'Zambia','ZM','ZMB','1');
 INSERT INTO countries VALUES (239,'Zimbabwe','ZW','ZWE','1');
 
 INSERT INTO currencies VALUES (1,'U.S. Dollar','USD','$','','.',',','2','1.0000', now());
-INSERT INTO currencies VALUES (2,'Euro','EUR','','â‚¬','.',',','2','1.0000', now());
+INSERT INTO currencies VALUES (2,'Euro','EUR','','€','.',',','2','1.0000', now());
 
 INSERT INTO languages VALUES (1,'English','en','icon.gif','english',1);
 
@@ -1140,151 +1137,62 @@ INSERT INTO orders_status VALUES ( '1', '1', 'Pending', '1', '0');
 INSERT INTO orders_status VALUES ( '2', '1', 'Processing', '1', '1');
 INSERT INTO orders_status VALUES ( '3', '1', 'Delivered', '1', '1');
 
-INSERT INTO products VALUES (1,32,'MG200MMS','matrox/mg200mms.gif',299.99, now(),null,null,23.00,1,1,1,0);
-INSERT INTO products VALUES (2,32,'MG400-32MB','matrox/mg400-32mb.gif',499.99, now(),null,null,23.00,1,1,1,0);
-INSERT INTO products VALUES (3,2,'MSIMPRO','microsoft/msimpro.gif',49.99, now(),null,null,7.00,1,1,3,0);
-INSERT INTO products VALUES (4,13,'DVD-RPMK','dvd/replacement_killers.gif',42.00, now(),null,null,23.00,1,1,2,0);
-INSERT INTO products VALUES (5,17,'DVD-BLDRNDC','dvd/blade_runner.gif',35.99, now(),null,null,7.00,1,1,3,0);
-INSERT INTO products VALUES (6,10,'DVD-MATR','dvd/the_matrix.gif',39.99, now(),null,null,7.00,1,1,3,0);
-INSERT INTO products VALUES (7,10,'DVD-YGEM','dvd/youve_got_mail.gif',34.99, now(),null,null,7.00,1,1,3,0);
-INSERT INTO products VALUES (8,10,'DVD-ABUG','dvd/a_bugs_life.gif',35.99, now(),null,null,7.00,1,1,3,0);
-INSERT INTO products VALUES (9,10,'DVD-UNSG','dvd/under_siege.gif',29.99, now(),null,null,7.00,1,1,3,0);
-INSERT INTO products VALUES (10,10,'DVD-UNSG2','dvd/under_siege2.gif',29.99, now(),null,null,7.00,1,1,3,0);
-INSERT INTO products VALUES (11,10,'DVD-FDBL','dvd/fire_down_below.gif',29.99, now(),null,null,7.00,1,1,3,0);
-INSERT INTO products VALUES (12,10,'DVD-DHWV','dvd/die_hard_3.gif',39.99, now(),null,null,7.00,1,1,4,0);
-INSERT INTO products VALUES (13,10,'DVD-LTWP','dvd/lethal_weapon.gif',34.99, now(),null,null,7.00,1,1,3,0);
-INSERT INTO products VALUES (14,10,'DVD-REDC','dvd/red_corner.gif',32.00, now(),null,null,7.00,1,1,3,0);
-INSERT INTO products VALUES (15,10,'DVD-FRAN','dvd/frantic.gif',35.00, now(),null,null,7.00,1,1,3,0);
-INSERT INTO products VALUES (16,10,'DVD-CUFI','dvd/courage_under_fire.gif',38.99, now(),null,null,7.00,1,1,4,0);
-INSERT INTO products VALUES (17,10,'DVD-SPEED','dvd/speed.gif',39.99, now(),null,null,7.00,1,1,4,0);
-INSERT INTO products VALUES (18,10,'DVD-SPEED2','dvd/speed_2.gif',42.00, now(),null,null,7.00,1,1,4,0);
-INSERT INTO products VALUES (19,10,'DVD-TSAB','dvd/theres_something_about_mary.gif',49.99, now(),null,null,7.00,1,1,4,0);
-INSERT INTO products VALUES (20,10,'DVD-BELOVED','dvd/beloved.gif',54.99, now(),null,null,7.00,1,1,3,0);
-INSERT INTO products VALUES (21,16,'PC-SWAT3','sierra/swat_3.gif',79.99, now(),null,null,7.00,1,1,7,0);
-INSERT INTO products VALUES (22,13,'PC-UNTM','gt_interactive/unreal_tournament.gif',89.99, now(),null,null,7.00,1,1,8,0);
-INSERT INTO products VALUES (23,16,'PC-TWOF','gt_interactive/wheel_of_time.gif',99.99, now(),null,null,10.00,1,1,8,0);
-INSERT INTO products VALUES (24,17,'PC-DISC','gt_interactive/disciples.gif',90.00, now(),null,null,8.00,1,1,8,0);
-INSERT INTO products VALUES (25,16,'MSINTKB','microsoft/intkeyboardps2.gif',69.99, now(),null,null,8.00,1,1,2,0);
-INSERT INTO products VALUES (26,10,'MSIMEXP','microsoft/imexplorer.gif',64.95, now(),null,null,8.00,1,1,2,0);
-INSERT INTO products VALUES (27,8,'HPLJ1100XI','hewlett_packard/lj1100xi.gif',499.99, now(),null,null,45.00,1,1,9,0);
-INSERT INTO products VALUES (28,100,'GT-P1000','samsung/galaxy_tab.gif',749.99, now(),null,null,1,1,1,10,0);
+INSERT INTO products VALUES(1, 0, 21, '11.9900', '#skuBook', '2015-02-24 23:10:25', '2015-04-09 10:29:05', '0.00', 0, 1, 1, 1, 1, 0, '2015-04-16 00:00:00');
+INSERT INTO products VALUES(2, 0, 0, '0.0000', '', '2015-02-24 23:10:26', '2015-03-15 07:46:49', '0.00', 0, 1, 0, 2, 0, 1, NULL);
+INSERT INTO products VALUES(3, 2, 49, '139.0000', 'DYMO400B', '2015-02-24 23:10:26', NULL, '1.00', 2, 1, 1, 2, 1, 0, NULL);
+INSERT INTO products VALUES(4, 2, 17, '169.0000', 'DYMO400W', '2015-02-24 23:10:26', NULL, '1.00', 2, 1, 1, 0, 3, 0, NULL);
+INSERT INTO products VALUES(5, 0, 0, '0.0000', '', '2015-02-24 23:10:26', '2015-04-29 13:41:11', '0.00', 0, 1, 0, 1, 0, 1, NULL);
+INSERT INTO products VALUES(6, 5, 20, '20.0000', 'OSCSHIRTM', '2015-02-24 23:10:26', '2015-04-29 13:41:11', '1.00', 2, 1, 1, 0, 1, 0, NULL);
+INSERT INTO products VALUES(7, 5, 17, '25.0000', 'OSCSHIRTL', '2015-02-24 23:10:26', '2015-04-29 13:41:11', '1.00', 2, 1, 1, 0, 3, 0, NULL);
 
-INSERT INTO products_description VALUES (1,1,'Matrox G200 MMS','Reinforcing its position as a multi-monitor trailblazer, Matrox Graphics Inc. has once again developed the most flexible and highly advanced solution in the industry. Introducing the new Matrox G200 Multi-Monitor Series; the first graphics card ever to support up to four DVI digital flat panel displays on a single 8&quot; PCI board.<br /><br />With continuing demand for digital flat panels in the financial workplace, the Matrox G200 MMS is the ultimate in flexible solutions. The Matrox G200 MMS also supports the new digital video interface (DVI) created by the Digital Display Working Group (DDWG) designed to ease the adoption of digital flat panels. Other configurations include composite video capture ability and onboard TV tuner, making the Matrox G200 MMS the complete solution for business needs.<br /><br />Based on the award-winning MGA-G200 graphics chip, the Matrox G200 Multi-Monitor Series provides superior 2D/3D graphics acceleration to meet the demanding needs of business applications such as real-time stock quotes (Versus), live video feeds (Reuters &amp; Bloombergs), multiple windows applications, word processing, spreadsheets and CAD.','www.matrox.com/mga/products/g200_mms/home.cfm',0);
-INSERT INTO products_description VALUES (2,1,'Matrox G400 32MB','<strong>Dramatically Different High Performance Graphics</strong><br /><br />Introducing the Millennium G400 Series - a dramatically different, high performance graphics experience. Armed with the industry\'s fastest graphics chip, the Millennium G400 Series takes explosive acceleration two steps further by adding unprecedented image quality, along with the most versatile display options for all your 3D, 2D and DVD applications. As the most powerful and innovative tools in your PC\'s arsenal, the Millennium G400 Series will not only change the way you see graphics, but will revolutionize the way you use your computer.<br /><br /><strong>Key features:</strong><ul><li>New Matrox G400 256-bit DualBus graphics chip</li><li>Explosive 3D, 2D and DVD performance</li><li>DualHead Display</li><li>Superior DVD and TV output</li><li>3D Environment-Mapped Bump Mapping</li><li>Vibrant Color Quality rendering </li><li>UltraSharp DAC of up to 360 MHz</li><li>3D Rendering Array Processor</li><li>Support for 16 or 32 MB of memory</li></ul>','www.matrox.com/mga/products/mill_g400/home.htm',0);
-INSERT INTO products_description VALUES (3,1,'Microsoft IntelliMouse Pro','Every element of IntelliMouse Pro - from its unique arched shape to the texture of the rubber grip around its base - is the product of extensive customer and ergonomic research. Microsoft\'s popular wheel control, which now allows zooming and universal scrolling functions, gives IntelliMouse Pro outstanding comfort and efficiency.','www.microsoft.com/hardware/mouse/intellimouse.asp',0);
-INSERT INTO products_description VALUES (4,1,'The Replacement Killers','Regional Code: 2 (Japan, Europe, Middle East, South Africa).<br />Languages: English, Deutsch.<br />Subtitles: English, Deutsch, Spanish.<br />Audio: Dolby Surround 5.1.<br />Picture Format: 16:9 Wide-Screen.<br />Length: (approx) 80 minutes.<br />Other: Interactive Menus, Chapter Selection, Subtitles (more languages).','www.replacement-killers.com',0);
-INSERT INTO products_description VALUES (5,1,'Blade Runner - Director\'s Cut','Regional Code: 2 (Japan, Europe, Middle East, South Africa).<br />Languages: English, Deutsch.<br />Subtitles: English, Deutsch, Spanish.<br />Audio: Dolby Surround 5.1.<br />Picture Format: 16:9 Wide-Screen.<br />Length: (approx) 112 minutes.<br />Other: Interactive Menus, Chapter Selection, Subtitles (more languages).','www.bladerunner.com',0);
-INSERT INTO products_description VALUES (6,1,'The Matrix','Regional Code: 2 (Japan, Europe, Middle East, South Africa).\r<br />\nLanguages: English, Deutsch.\r<br />\nSubtitles: English, Deutsch.\r<br />\nAudio: Dolby Surround.\r<br />\nPicture Format: 16:9 Wide-Screen.\r<br />\nLength: (approx) 131 minutes.\r<br />\nOther: Interactive Menus, Chapter Selection, Making Of.','www.thematrix.com',0);
-INSERT INTO products_description VALUES (7,1,'You\'ve Got Mail','Regional Code: 2 (Japan, Europe, Middle East, South Africa).\r<br />\nLanguages: English, Deutsch, Spanish.\r<br />\nSubtitles: English, Deutsch, Spanish, French, Nordic, Polish.\r<br />\nAudio: Dolby Digital 5.1.\r<br />\nPicture Format: 16:9 Wide-Screen.\r<br />\nLength: (approx) 115 minutes.\r<br />\nOther: Interactive Menus, Chapter Selection, Subtitles (more languages).','www.youvegotmail.com',0);
-INSERT INTO products_description VALUES (8,1,'A Bug\'s Life','Regional Code: 2 (Japan, Europe, Middle East, South Africa).\r<br />\nLanguages: English, Deutsch.\r<br />\nSubtitles: English, Deutsch, Spanish.\r<br />\nAudio: Dolby Digital 5.1 / Dobly Surround Stereo.\r<br />\nPicture Format: 16:9 Wide-Screen.\r<br />\nLength: (approx) 91 minutes.\r<br />\nOther: Interactive Menus, Chapter Selection, Subtitles (more languages).','www.abugslife.com',0);
-INSERT INTO products_description VALUES (9,1,'Under Siege','Regional Code: 2 (Japan, Europe, Middle East, South Africa).\r<br />\nLanguages: English, Deutsch.\r<br />\nSubtitles: English, Deutsch, Spanish.\r<br />\nAudio: Dolby Surround 5.1.\r<br />\nPicture Format: 16:9 Wide-Screen.\r<br />\nLength: (approx) 98 minutes.\r<br />\nOther: Interactive Menus, Chapter Selection, Subtitles (more languages).','',0);
-INSERT INTO products_description VALUES (10,1,'Under Siege 2 - Dark Territory','Regional Code: 2 (Japan, Europe, Middle East, South Africa).\r<br />\nLanguages: English, Deutsch.\r<br />\nSubtitles: English, Deutsch, Spanish.\r<br />\nAudio: Dolby Surround 5.1.\r<br />\nPicture Format: 16:9 Wide-Screen.\r<br />\nLength: (approx) 98 minutes.\r<br />\nOther: Interactive Menus, Chapter Selection, Subtitles (more languages).','',0);
-INSERT INTO products_description VALUES (11,1,'Fire Down Below','Regional Code: 2 (Japan, Europe, Middle East, South Africa).\r<br />\nLanguages: English, Deutsch.\r<br />\nSubtitles: English, Deutsch, Spanish.\r<br />\nAudio: Dolby Surround 5.1.\r<br />\nPicture Format: 16:9 Wide-Screen.\r<br />\nLength: (approx) 100 minutes.\r<br />\nOther: Interactive Menus, Chapter Selection, Subtitles (more languages).','',0);
-INSERT INTO products_description VALUES (12,1,'Die Hard With A Vengeance','Regional Code: 2 (Japan, Europe, Middle East, South Africa).\r<br />\nLanguages: English, Deutsch.\r<br />\nSubtitles: English, Deutsch, Spanish.\r<br />\nAudio: Dolby Surround 5.1.\r<br />\nPicture Format: 16:9 Wide-Screen.\r<br />\nLength: (approx) 122 minutes.\r<br />\nOther: Interactive Menus, Chapter Selection, Subtitles (more languages).','',0);
-INSERT INTO products_description VALUES (13,1,'Lethal Weapon','Regional Code: 2 (Japan, Europe, Middle East, South Africa).\r<br />\nLanguages: English, Deutsch.\r<br />\nSubtitles: English, Deutsch, Spanish.\r<br />\nAudio: Dolby Surround 5.1.\r<br />\nPicture Format: 16:9 Wide-Screen.\r<br />\nLength: (approx) 100 minutes.\r<br />\nOther: Interactive Menus, Chapter Selection, Subtitles (more languages).','',0);
-INSERT INTO products_description VALUES (14,1,'Red Corner','Regional Code: 2 (Japan, Europe, Middle East, South Africa).\r<br />\nLanguages: English, Deutsch.\r<br />\nSubtitles: English, Deutsch, Spanish.\r<br />\nAudio: Dolby Surround 5.1.\r<br />\nPicture Format: 16:9 Wide-Screen.\r<br />\nLength: (approx) 117 minutes.\r<br />\nOther: Interactive Menus, Chapter Selection, Subtitles (more languages).','',0);
-INSERT INTO products_description VALUES (15,1,'Frantic','Regional Code: 2 (Japan, Europe, Middle East, South Africa).\r<br />\nLanguages: English, Deutsch.\r<br />\nSubtitles: English, Deutsch, Spanish.\r<br />\nAudio: Dolby Surround 5.1.\r<br />\nPicture Format: 16:9 Wide-Screen.\r<br />\nLength: (approx) 115 minutes.\r<br />\nOther: Interactive Menus, Chapter Selection, Subtitles (more languages).','',0);
-INSERT INTO products_description VALUES (16,1,'Courage Under Fire','Regional Code: 2 (Japan, Europe, Middle East, South Africa).\r<br />\nLanguages: English, Deutsch.\r<br />\nSubtitles: English, Deutsch, Spanish.\r<br />\nAudio: Dolby Surround 5.1.\r<br />\nPicture Format: 16:9 Wide-Screen.\r<br />\nLength: (approx) 112 minutes.\r<br />\nOther: Interactive Menus, Chapter Selection, Subtitles (more languages).','',0);
-INSERT INTO products_description VALUES (17,1,'Speed','Regional Code: 2 (Japan, Europe, Middle East, South Africa).\r<br />\nLanguages: English, Deutsch.\r<br />\nSubtitles: English, Deutsch, Spanish.\r<br />\nAudio: Dolby Surround 5.1.\r<br />\nPicture Format: 16:9 Wide-Screen.\r<br />\nLength: (approx) 112 minutes.\r<br />\nOther: Interactive Menus, Chapter Selection, Subtitles (more languages).','',0);
-INSERT INTO products_description VALUES (18,1,'Speed 2: Cruise Control','Regional Code: 2 (Japan, Europe, Middle East, South Africa).\r<br />\nLanguages: English, Deutsch.\r<br />\nSubtitles: English, Deutsch, Spanish.\r<br />\nAudio: Dolby Surround 5.1.\r<br />\nPicture Format: 16:9 Wide-Screen.\r<br />\nLength: (approx) 120 minutes.\r<br />\nOther: Interactive Menus, Chapter Selection, Subtitles (more languages).','',0);
-INSERT INTO products_description VALUES (19,1,'There\'s Something About Mary','Regional Code: 2 (Japan, Europe, Middle East, South Africa).\r<br />\nLanguages: English, Deutsch.\r<br />\nSubtitles: English, Deutsch, Spanish.\r<br />\nAudio: Dolby Surround 5.1.\r<br />\nPicture Format: 16:9 Wide-Screen.\r<br />\nLength: (approx) 114 minutes.\r<br />\nOther: Interactive Menus, Chapter Selection, Subtitles (more languages).','',0);
-INSERT INTO products_description VALUES (20,1,'Beloved','Regional Code: 2 (Japan, Europe, Middle East, South Africa).\r<br />\nLanguages: English, Deutsch.\r<br />\nSubtitles: English, Deutsch, Spanish.\r<br />\nAudio: Dolby Surround 5.1.\r<br />\nPicture Format: 16:9 Wide-Screen.\r<br />\nLength: (approx) 164 minutes.\r<br />\nOther: Interactive Menus, Chapter Selection, Subtitles (more languages).','',0);
-INSERT INTO products_description VALUES (21,1,'SWAT 3: Close Quarters Battle','<strong>Windows 95/98</strong><br /><br />211 in progress with shots fired. Officer down. Armed suspects with hostages. Respond Code 3! Los Angles, 2005, In the next seven days, representatives from every nation around the world will converge on Las Angles to witness the signing of the United Nations Nuclear Abolishment Treaty. The protection of these dignitaries falls on the shoulders of one organization, LAPD SWAT. As part of this elite tactical organization, you and your team have the weapons and all the training necessary to protect, to serve, and \"When needed\" to use deadly force to keep the peace. It takes more than weapons to make it through each mission. Your arsenal includes C2 charges, flashbangs, tactical grenades. opti-Wand mini-video cameras, and other devices critical to meeting your objectives and keeping your men free of injury. Uncompromised Duty, Honor and Valor!','www.swat3.com',0);
-INSERT INTO products_description VALUES (22,1,'Unreal Tournament','From the creators of the best-selling Unreal, comes Unreal Tournament. A new kind of single player experience. A ruthless multiplayer revolution.<br /><br />This stand-alone game showcases completely new team-based gameplay, groundbreaking multi-faceted single player action or dynamic multi-player mayhem. It\'s a fight to the finish for the title of Unreal Grand Master in the gladiatorial arena. A single player experience like no other! Guide your team of \'bots\' (virtual teamates) against the hardest criminals in the galaxy for the ultimate title - the Unreal Grand Master.','www.unrealtournament.net',0);
-INSERT INTO products_description VALUES (23,1,'The Wheel Of Time','The world in which The Wheel of Time takes place is lifted directly out of Jordan\'s pages; it\'s huge and consists of many different environments. How you navigate the world will depend largely on which game - single player or multipayer - you\'re playing. The single player experience, with a few exceptions, will see Elayna traversing the world mainly by foot (with a couple notable exceptions). In the multiplayer experience, your character will have more access to travel via Ter\'angreal, Portal Stones, and the Ways. However you move around, though, you\'ll quickly discover that means of locomotion can easily become the least of the your worries...<br /><br />During your travels, you quickly discover that four locations are crucial to your success in the game. Not surprisingly, these locations are the homes of The Wheel of Time\'s main characters. Some of these places are ripped directly from the pages of Jordan\'s books, made flesh with Legend\'s unparalleled pixel-pushing ways. Other places are specific to the game, conceived and executed with the intent of expanding this game world even further. Either way, they provide a backdrop for some of the most intense first person action and strategy you\'ll have this year.','www.wheeloftime.com',0);
-INSERT INTO products_description VALUES (24,1,'Disciples: Sacred Lands','A new age is dawning...<br /><br />Enter the realm of the Sacred Lands, where the dawn of a New Age has set in motion the most momentous of wars. As the prophecies long foretold, four races now clash with swords and sorcery in a desperate bid to control the destiny of their gods. Take on the quest as a champion of the Empire, the Mountain Clans, the Legions of the Damned, or the Undead Hordes and test your faith in battles of brute force, spellbinding magic and acts of guile. Slay demons, vanquish giants and combat merciless forces of the dead and undead. But to ensure the salvation of your god, the hero within must evolve.<br /><br />The day of reckoning has come... and only the chosen will survive.','',0);
-INSERT INTO products_description VALUES (25,1,'Microsoft Internet Keyboard PS/2','The Internet Keyboard has 10 Hot Keys on a comfortable standard keyboard design that also includes a detachable palm rest. The Hot Keys allow you to browse the web, or check e-mail directly from your keyboard. The IntelliType Pro software also allows you to customize your hot keys - make the Internet Keyboard work the way you want it to!','',0);
-INSERT INTO products_description VALUES (26,1,'Microsoft IntelliMouse Explorer','Microsoft introduces its most advanced mouse, the IntelliMouse Explorer! IntelliMouse Explorer features a sleek design, an industrial-silver finish, a glowing red underside and taillight, creating a style and look unlike any other mouse. IntelliMouse Explorer combines the accuracy and reliability of Microsoft IntelliEye optical tracking technology, the convenience of two new customizable function buttons, the efficiency of the scrolling wheel and the comfort of expert ergonomic design. All these great features make this the best mouse for the PC!','www.microsoft.com/hardware/mouse/explorer.asp',0);
-INSERT INTO products_description VALUES (27,1,'Hewlett Packard LaserJet 1100Xi','HP has always set the pace in laser printing technology. The new generation HP LaserJet 1100 series sets another impressive pace, delivering a stunning 8 pages per minute print speed. The 600 dpi print resolution with HP\'s Resolution Enhancement technology (REt) makes every document more professional.<br /><br />Enhanced print speed and laser quality results are just the beginning. With 2MB standard memory, HP LaserJet 1100xi users will be able to print increasingly complex pages. Memory can be increased to 18MB to tackle even more complex documents with ease. The HP LaserJet 1100xi supports key operating systems including Windows 3.1, 3.11, 95, 98, NT 4.0, OS/2 and DOS. Network compatibility available via the optional HP JetDirect External Print Servers.<br /><br />HP LaserJet 1100xi also features The Document Builder for the Web Era from Trellix Corp. (featuring software to create Web documents).','www.pandi.hp.com/pandi-db/prodinfo.main?product=laserjet1100',0);
-INSERT INTO products_description VALUES (28,1,'Samsung Galaxy Tab','<p>Powered by a Cortex A8 1.0GHz application processor, the Samsung GALAXY Tab is designed to deliver high performance whenever and wherever you are. At the same time, HD video contents are supported by a wide range of multimedia formats (DivX, XviD, MPEG4, H.263, H.264 and more), which maximizes the joy of entertainment.</p><p>With 3G HSPA connectivity, 802.11n Wi-Fi, and Bluetooth 3.0, the Samsung GALAXY Tab enhances users\' mobile communication on a whole new level. Video conferencing and push email on the large 7-inch display make communication more smooth and efficient. For voice telephony, the Samsung GALAXY Tab turns out to be a perfect speakerphone on the desk, or a mobile phone on the move via Bluetooth headset.</p>','http://galaxytab.samsungmobile.com',0);
+INSERT INTO products_description VALUES(1, 1, 'Pro PHP Security', '<p><i>Pro PHP Security</i> is one of the first books devoted solely to PHP security. It will serve as your complete guide for taking defensive and proactive security measures within your PHP applications. (And the methods discussed are compatible with PHP versions 3, 4, and 5.)</p><p>The knowledge you''ll gain from this comprehensive guide will help you prevent attackers from potentially disrupting site operation or destroying data. And you''ll learn about various security measures, for example, creating and deploying "captchas," validating e-mail, fending off SQL injection attacks, and preventing cross-site scripting attempts.</p><h3>Author Information</h3><h4>Chris Snyder</h4><p>Chris Snyder is a software engineer at Fund for the City of New York, where he helps develop next-generation websites and services for nonprofit organizations. He is a member of the Executive Board of New York PHP, and has been looking for new ways to build scriptable, linked, multimedia content since he saw his first Hypercard stack in 1988.</p></p><p align="justify"><h4>Michael Southwell</h4><p>Michael Southwell is a retired English professor who has been developing websites for more than 10 years in the small business, nonprofit, and educational areas, with special interest in problems of accessibility. He has authored and co-authored 8 books and numerous articles about writing, writing and computers, and writing education. He is a member of the Executive Board of New York PHP, and a Zend Certified Engineer.</p>', 'pro_php_security', 'pro php security book apress', '', 88);
+INSERT INTO products_description VALUES(2, 1, 'LabelWriter 400 Turbo', '<p>Compact, lightning-quick and easy to use – this LabelWriter is the fastest PC-and-Mac compatible label printer in its class. A customer favorite, 400 Turbo prints high-resolution labels for envelopes, packages, files, folders, media, name badges and more – directly from Microsoft® Word, WordPerfect®, Outlook®, QuickBooks®, ACT!® and other popular software.</p><h4>Features & Benefits</h4><ul><li>Eliminates the hassle of printing labels with a standard office printer.</li><li>Direct thermal printing means you never change a ribbon, toner or ink cartridges. The only supplies you ever need are the labels.</li><li>Super fast print speed. About 1 second per label, 55 labels per minute. Very quiet.</li></ul>', 'labelwriter_400_turbo', 'label printer', 'http://global.dymo.com/enUS/Products/LabelWriter_400_Turbo.html', 483);
+INSERT INTO products_description VALUES(5, 1, 'osCommerce T-Shirt', '<p>osCommerce t-shirt made from 100% cotton.aaa</p>', 'oscommerce-tshirt', 'tshirt', '', 134);
 
-INSERT INTO products_attributes VALUES (1,1,4,1,0.00,'+');
-INSERT INTO products_attributes VALUES (2,1,4,2,50.00,'+');
-INSERT INTO products_attributes VALUES (3,1,4,3,70.00,'+');
-INSERT INTO products_attributes VALUES (4,1,3,5,0.00,'+');
-INSERT INTO products_attributes VALUES (5,1,3,6,100.00,'+');
-INSERT INTO products_attributes VALUES (6,2,4,3,10.00,'-');
-INSERT INTO products_attributes VALUES (7,2,4,4,0.00,'+');
-INSERT INTO products_attributes VALUES (8,2,3,6,0.00,'+');
-INSERT INTO products_attributes VALUES (9,2,3,7,120.00,'+');
-INSERT INTO products_attributes VALUES (10,26,3,8,0.00,'+');
-INSERT INTO products_attributes VALUES (11,26,3,9,6.00,'+');
-INSERT INTO products_attributes VALUES (26, 22, 5, 10, '0.00', '+');
-INSERT INTO products_attributes VALUES (27, 22, 5, 13, '0.00', '+');
+INSERT INTO products_images VALUES(1, 1, 'pro_php_security.jpg', '', 1, 1);
+INSERT INTO products_images VALUES(2, 2, 'dymo400.png', '', 1, 1);
+INSERT INTO products_images VALUES(3, 5, 'front.png', '', 1, 1);
+INSERT INTO products_images VALUES(4, 5, 'back.png', '', 0, 2);
 
-INSERT INTO products_attributes_download VALUES (26, 'unreal.zip', 7, 3);
+INSERT INTO products_variants VALUES(3, 5, 1);
+INSERT INTO products_variants VALUES(3, 6, 1);
+INSERT INTO products_variants VALUES(4, 4, 0);
+INSERT INTO products_variants VALUES(4, 7, 0);
+INSERT INTO products_variants VALUES(6, 2, 1);
+INSERT INTO products_variants VALUES(6, 8, 1);
+INSERT INTO products_variants VALUES(7, 3, 0);
+INSERT INTO products_variants VALUES(7, 8, 0);
+INSERT INTO products_variants VALUES(8, 1, 0);
+INSERT INTO products_variants VALUES(8, 8, 0);
+INSERT INTO products_variants VALUES(12, 1, 0);
+INSERT INTO products_variants VALUES(12, 8, 0);
+INSERT INTO products_variants VALUES(13, 3, 1);
+INSERT INTO products_variants VALUES(13, 8, 1);
 
-INSERT INTO products_images VALUES (1,28,'samsung/galaxy_tab_1.jpg',null,1);
-INSERT INTO products_images VALUES (2,28,'samsung/galaxy_tab_2.jpg',null,2);
-INSERT INTO products_images VALUES (3,28,'samsung/galaxy_tab_3.jpg',null,3);
-INSERT INTO products_images VALUES (4,28,'samsung/galaxy_tab_4.jpg','<iframe width="560" height="315" src="http://www.youtube.com/embed/tAbsmHMAhrQ" frameborder="0" allowfullscreen></iframe>',4);
-INSERT INTO products_images VALUES (5,17,'dvd/speed_large.jpg',null,1);
-INSERT INTO products_images VALUES (6,12,'dvd/die_hard_3_large.jpg',null,1);
-INSERT INTO products_images VALUES (7,11,'dvd/fire_down_below_large.jpg',null,1);
-INSERT INTO products_images VALUES (8,13,'dvd/lethal_weapon_large.jpg',null,1);
-INSERT INTO products_images VALUES (9,18,'dvd/speed_2_large.jpg',null,1);
-INSERT INTO products_images VALUES (10,6,'dvd/the_matrix_large.jpg',null,1);
-INSERT INTO products_images VALUES (11,4,'dvd/replacement_killers_large.jpg',null,1);
-INSERT INTO products_images VALUES (12,9,'dvd/under_siege_large.jpg',null,1);
+INSERT INTO products_variants_groups VALUES(1, 1, 'Size', 10, 'pull_down_menu');
+INSERT INTO products_variants_groups VALUES(2, 1, 'Colour', 100, 'pull_down_menu');
+INSERT INTO products_variants_groups VALUES(3, 1, 'Material', 30, 'radio_buttons');
+INSERT INTO products_variants_groups VALUES(4, 1, 'Text', 40, 'text_field');
 
-INSERT INTO products_options VALUES (1,1,'Color');
-INSERT INTO products_options VALUES (2,1,'Size');
-INSERT INTO products_options VALUES (3,1,'Model');
-INSERT INTO products_options VALUES (4,1,'Memory');
-INSERT INTO products_options VALUES (5, 1, 'Version');
+INSERT INTO products_variants_values VALUES(1, 1, 1, 'Small', 10);
+INSERT INTO products_variants_values VALUES(2, 1, 1, 'Medium', 20);
+INSERT INTO products_variants_values VALUES(3, 1, 1, 'Large', 30);
+INSERT INTO products_variants_values VALUES(4, 1, 2, 'White', 1);
+INSERT INTO products_variants_values VALUES(5, 1, 2, 'Black', 2);
+INSERT INTO products_variants_values VALUES(6, 1, 3, 'Soft', 1);
+INSERT INTO products_variants_values VALUES(7, 1, 3, 'Hard', 2);
+INSERT INTO products_variants_values VALUES(8, 1, 4, 'Front', 1);
+INSERT INTO products_variants_values VALUES(9, 1, 4, 'Back', 2);
 
-INSERT INTO products_options_values VALUES (1,1,'4 mb');
-INSERT INTO products_options_values VALUES (2,1,'8 mb');
-INSERT INTO products_options_values VALUES (3,1,'16 mb');
-INSERT INTO products_options_values VALUES (4,1,'32 mb');
-INSERT INTO products_options_values VALUES (5,1,'Value');
-INSERT INTO products_options_values VALUES (6,1,'Premium');
-INSERT INTO products_options_values VALUES (7,1,'Deluxe');
-INSERT INTO products_options_values VALUES (8,1,'PS/2');
-INSERT INTO products_options_values VALUES (9,1,'USB');
-INSERT INTO products_options_values VALUES (10, 1, 'Download: Windows - English');
-INSERT INTO products_options_values VALUES (13, 1, 'Box: Windows - English');
+INSERT INTO product_attributes VALUES(21, 1, 0, '1');
+INSERT INTO product_attributes VALUES(21, 2, 0, '2');
+INSERT INTO product_attributes VALUES(28, 5, 0, '1');
+INSERT INTO product_attributes VALUES(28, 1, 0, '1');
+INSERT INTO product_attributes VALUES(28, 2, 0, '1');
 
-INSERT INTO products_options_values_to_products_options VALUES (1,4,1);
-INSERT INTO products_options_values_to_products_options VALUES (2,4,2);
-INSERT INTO products_options_values_to_products_options VALUES (3,4,3);
-INSERT INTO products_options_values_to_products_options VALUES (4,4,4);
-INSERT INTO products_options_values_to_products_options VALUES (5,3,5);
-INSERT INTO products_options_values_to_products_options VALUES (6,3,6);
-INSERT INTO products_options_values_to_products_options VALUES (7,3,7);
-INSERT INTO products_options_values_to_products_options VALUES (8,3,8);
-INSERT INTO products_options_values_to_products_options VALUES (9,3,9);
-INSERT INTO products_options_values_to_products_options VALUES (10, 5, 10);
-INSERT INTO products_options_values_to_products_options VALUES (13, 5, 13);
-
-INSERT INTO products_to_categories VALUES (1,4);
-INSERT INTO products_to_categories VALUES (2,4);
-INSERT INTO products_to_categories VALUES (3,9);
-INSERT INTO products_to_categories VALUES (4,10);
-INSERT INTO products_to_categories VALUES (5,11);
-INSERT INTO products_to_categories VALUES (6,10);
-INSERT INTO products_to_categories VALUES (7,12);
-INSERT INTO products_to_categories VALUES (8,13);
-INSERT INTO products_to_categories VALUES (9,10);
-INSERT INTO products_to_categories VALUES (10,10);
-INSERT INTO products_to_categories VALUES (11,10);
-INSERT INTO products_to_categories VALUES (12,10);
-INSERT INTO products_to_categories VALUES (13,10);
-INSERT INTO products_to_categories VALUES (14,15);
-INSERT INTO products_to_categories VALUES (15,14);
-INSERT INTO products_to_categories VALUES (16,15);
-INSERT INTO products_to_categories VALUES (17,10);
-INSERT INTO products_to_categories VALUES (18,10);
-INSERT INTO products_to_categories VALUES (19,12);
-INSERT INTO products_to_categories VALUES (20,15);
-INSERT INTO products_to_categories VALUES (21,18);
-INSERT INTO products_to_categories VALUES (22,19);
-INSERT INTO products_to_categories VALUES (23,20);
-INSERT INTO products_to_categories VALUES (24,20);
-INSERT INTO products_to_categories VALUES (25,8);
-INSERT INTO products_to_categories VALUES (26,9);
-INSERT INTO products_to_categories VALUES (27,5);
-INSERT INTO products_to_categories VALUES (28,21);
+INSERT INTO products_to_categories VALUES(1, 2);
+INSERT INTO products_to_categories VALUES(2, 3);
+INSERT INTO products_to_categories VALUES(5, 4);
 
 INSERT INTO reviews VALUES (1,19,0,'John Doe',5,now(),null,1,0);
 
@@ -1304,10 +1212,13 @@ INSERT INTO sec_directory_whitelist values (null, 'images/sierra');
 INSERT INTO sec_directory_whitelist values (null, 'includes/work');
 INSERT INTO sec_directory_whitelist values (null, 'pub');
 
-INSERT INTO specials VALUES (1,3, 39.99, now(), null, null, null, '1');
-INSERT INTO specials VALUES (2,5, 30.00, now(), null, null, null, '1');
-INSERT INTO specials VALUES (3,6, 30.00, now(), null, null, null, '1');
-INSERT INTO specials VALUES (4,16, 29.99, now(), null, null, null, '1');
+INSERT INTO shipping_availability VALUES(1, 1, 'Ships within 24 hours.', 'ships24hours');
+
+INSERT INTO specials VALUES(1, 1, '9.9900', '2015-03-10 09:02:04', NULL, NULL, NULL, 1);
+
+INSERT INTO templates_boxes VALUES(20, 'Date Available', 'date_available', 'osCommerce', 'http://www.oscommerce.com', 'product_attributes');
+INSERT INTO templates_boxes VALUES(21, 'Manufacturers', 'manufacturers', 'osCommerce', 'http://www.oscommerce.com', 'product_attributes');
+INSERT INTO templates_boxes VALUES(28, 'Shipping Availability', 'shipping_availability', 'osCommerce', 'http://www.oscommerce.com', 'product_attributes');
 
 INSERT INTO tax_class VALUES (1, 'Taxable Goods', 'The following types of products are included non-food, services, etc', now(), now());
 
@@ -1400,7 +1311,7 @@ INSERT INTO zones VALUES (78,38,'YT','Yukon Territory');
 
 # Germany
 INSERT INTO zones VALUES (79,81,'NDS','Niedersachsen');
-INSERT INTO zones VALUES (80,81,'BAW','Baden-WÃ¼rttemberg');
+INSERT INTO zones VALUES (80,81,'BAW','Baden-Württemberg');
 INSERT INTO zones VALUES (81,81,'BAY','Bayern');
 INSERT INTO zones VALUES (82,81,'BER','Berlin');
 INSERT INTO zones VALUES (83,81,'BRG','Brandenburg');
@@ -1414,14 +1325,14 @@ INSERT INTO zones VALUES (90,81,'SAR','Saarland');
 INSERT INTO zones VALUES (91,81,'SAS','Sachsen');
 INSERT INTO zones VALUES (92,81,'SAC','Sachsen-Anhalt');
 INSERT INTO zones VALUES (93,81,'SCN','Schleswig-Holstein');
-INSERT INTO zones VALUES (94,81,'THE','ThÃ¼ringen');
+INSERT INTO zones VALUES (94,81,'THE','Thüringen');
 
 # Austria
 INSERT INTO zones VALUES (95,14,'WI','Wien');
-INSERT INTO zones VALUES (96,14,'NO','NiederÃ¶sterreich');
-INSERT INTO zones VALUES (97,14,'OO','OberÃ¶sterreich');
+INSERT INTO zones VALUES (96,14,'NO','Niederösterreich');
+INSERT INTO zones VALUES (97,14,'OO','Oberösterreich');
 INSERT INTO zones VALUES (98,14,'SB','Salzburg');
-INSERT INTO zones VALUES (99,14,'KN','KÃ¤rnten');
+INSERT INTO zones VALUES (99,14,'KN','Kärnten');
 INSERT INTO zones VALUES (100,14,'ST','Steiermark');
 INSERT INTO zones VALUES (101,14,'TI','Tirol');
 INSERT INTO zones VALUES (102,14,'BL','Burgenland');
@@ -1437,7 +1348,7 @@ INSERT INTO zones VALUES (109,204,'BS','Basel-Stadt');
 INSERT INTO zones VALUES (110,204,'FR','Freiburg');
 INSERT INTO zones VALUES (111,204,'GE','Genf');
 INSERT INTO zones VALUES (112,204,'GL','Glarus');
-INSERT INTO zones VALUES (113,204,'JU','GraubÃ¼nden');
+INSERT INTO zones VALUES (113,204,'JU','Graubünden');
 INSERT INTO zones VALUES (114,204,'JU','Jura');
 INSERT INTO zones VALUES (115,204,'LU','Luzern');
 INSERT INTO zones VALUES (116,204,'NE','Neuenburg');
@@ -1453,10 +1364,10 @@ INSERT INTO zones VALUES (125,204,'UR','Uri');
 INSERT INTO zones VALUES (126,204,'VD','Waadt');
 INSERT INTO zones VALUES (127,204,'VS','Wallis');
 INSERT INTO zones VALUES (128,204,'ZG','Zug');
-INSERT INTO zones VALUES (129,204,'ZH','ZÃ¼rich');
+INSERT INTO zones VALUES (129,204,'ZH','Zürich');
 
 # Spain
-INSERT INTO zones (zone_country_id, zone_code, zone_name) VALUES (195,'A CoruÃ±a','A CoruÃ±a');
+INSERT INTO zones (zone_country_id, zone_code, zone_name) VALUES (195,'A Coruña','A Coruña');
 INSERT INTO zones (zone_country_id, zone_code, zone_name) VALUES (195,'Alava','Alava');
 INSERT INTO zones (zone_country_id, zone_code, zone_name) VALUES (195,'Albacete','Albacete');
 INSERT INTO zones (zone_country_id, zone_code, zone_name) VALUES (195,'Alicante','Alicante');
@@ -1630,3 +1541,5 @@ INSERT INTO configuration (configuration_title, configuration_key, configuration
 INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) values ('Enable New User Module', 'MODULE_CONTENT_CREATE_ACCOUNT_LINK_STATUS', 'True', 'Do you want to enable the new user module?', '6', '1', 'tep_cfg_select_option(array(\'True\', \'False\'), ', now());
 INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) values ('Content Width', 'MODULE_CONTENT_CREATE_ACCOUNT_LINK_CONTENT_WIDTH', 'Half', 'Should the content be shown in a full or half width container?', '6', '1', 'tep_cfg_select_option(array(\'Full\', \'Half\'), ', now());
 INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) values ('Sort Order', 'MODULE_CONTENT_CREATE_ACCOUNT_LINK_SORT_ORDER', '2000', 'Sort order of display. Lowest is displayed first.', '6', '0', now());
+
+
