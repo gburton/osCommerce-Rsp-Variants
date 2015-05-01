@@ -356,19 +356,19 @@
 					if ( isset($_POST['variants']) && is_array($_POST['variants']) && !empty($_POST['variants']) ) {
 						if ( $osC_Product->variantExists($_POST['variants']) ) {
 							$cart->add_cart($osC_Product->getProductVariantID($_POST['variants']));
-						
-						} else {
+							
+							} else {
 							tep_redirect(tep_href_link(FILENAME_PRODUCT_INFO, 'products_id=' . $_GET['products_id']));
 							
 							return false;
 						}
-					
-					} else {
+						
+						} else {
 						tep_redirect(tep_href_link(FILENAME_PRODUCT_INFO, 'products_id=' . $_GET['products_id']));
 						
 						return false;
 					}
-				} else {
+					} else {
 					$cart->add_cart($osC_Product->getID());
 				}
 			}
@@ -385,10 +385,21 @@
 			tep_redirect(tep_href_link($goto, null));
 			break;
 			// performed by the 'buy now' button in product listings and review page
-			case 'buy_now' :        if (isset($_GET['products_id'])) {
+			case 'buy_now' :        
+			if (isset($_GET['products_id']) && is_numeric($_GET['products_id'])) {
 				
-				$cart->add_cart($_GET['products_id'], $cart->get_quantity($_GET['products_id'])+1);
-				$messageStack->add_session('product_action', sprintf(PRODUCT_ADDED, tep_get_products_name((int)$_GET['products_id'])), 'success');
+				$osC_Product = new osC_Product($_GET['products_id']);			
+				
+				if ( $osC_Product->hasVariants() ) {
+					
+					tep_redirect(tep_href_link(FILENAME_PRODUCT_INFO, 'products_id=' . $_GET['products_id']));
+					
+					return false;
+					
+					} else {
+					$cart->add_cart($osC_Product->getID());
+					$messageStack->add_session('product_action', sprintf(PRODUCT_ADDED, tep_get_products_name((int)$_GET['products_id'])), 'success');
+				}
 			}
 			tep_redirect(tep_href_link($goto, tep_get_all_get_params($parameters)));
 			break;
