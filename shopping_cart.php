@@ -46,8 +46,6 @@
 <?php
     $any_out_of_stock = 0;
     $products = $cart->get_products();
-	var_dump($products);	
-
 ?>
 
     <table class="table table-striped table-condensed">
