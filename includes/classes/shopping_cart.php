@@ -335,7 +335,8 @@
 			
 			return false;
 		}
-		
+		/*
+		//Depricated
 		function update_quantity($products_id, $quantity = '') {
 			global $customer_id;
 			
@@ -356,6 +357,24 @@
 				$this->cartID = $this->generate_cart_id();
 			}
 		}
+		*/
+		public function update($item_id, $quantity) {
+			global $customer_id;
+			
+			if ( !is_numeric($quantity) ) {
+				$quantity = $this->getQuantity($item_id) + 1;
+			}
+			
+			$this->contents[$item_id]['quantity'] = $quantity;
+			
+			if ( tep_session_is_registered('customer_id') ) {
+				tep_db_query("update customers_basket set quantity = '" . (int)$quantity . "' where customers_id = '" . (int)$customer_id . "' and item_id = '" . (int)$item_id . "'");
+			}
+			
+			$this->cleanup();
+			$this->calculate();
+		}
+		
 		private function cleanup() {
 			global $customer_id;
 			

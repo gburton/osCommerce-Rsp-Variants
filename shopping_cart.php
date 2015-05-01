@@ -75,9 +75,8 @@
 									$products_name .= '<br>- ' . $variant['group_title'] . ': ' . $variant['value_title'];
 								}
 							}
-							
-							$products_name .= '<br>' . tep_draw_input_field('cart_quantity[]', $products['quantity'], 'style="width: 65px;" min="0"', 'number') . tep_draw_hidden_field('products_id[]', $products_id) . ' ' . tep_draw_button(NULL, 'glyphicon glyphicon-refresh', NULL, NULL, NULL, 'btn-info btn-xs') . ' ' . tep_draw_button(NULL, 'glyphicon glyphicon-remove', tep_href_link(FILENAME_SHOPPING_CART, 'item_id=' . $products['item_id'] . '&action=remove_product'), NULL, NULL, 'btn-danger btn-xs');
-							
+							$products_name .= '<br>' . tep_draw_input_field('products[' . $products['item_id'] . ']', $products['quantity'], 'style="width: 65px;" min="0"', 'number') . ' ' . tep_draw_button(NULL, 'glyphicon glyphicon-refresh', NULL, NULL, NULL, 'btn-info btn-xs') . ' ' . tep_draw_button(NULL, 'glyphicon glyphicon-remove', tep_href_link(FILENAME_SHOPPING_CART, 'item_id=' . $products['item_id'] . '&action=remove_product'), NULL, NULL, 'btn-danger btn-xs');
+
 							$products_name .= '</td>';
 							
 							$products_name .= '  <td align="right" valign="top"><strong>' . $currencies->display_price($products['price'], tep_get_tax_rate($products['tax_class_id']), $products['quantity']) . '</strong></td>' .
