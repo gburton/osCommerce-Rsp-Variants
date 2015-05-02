@@ -11,34 +11,26 @@
 	*/
 	
 	require('includes/application_top.php');
-
 	
-	if (!isset($_GET['products_id'])) {
-		tep_redirect(tep_href_link(FILENAME_DEFAULT));
-	}
+	
+	//if (!isset($_GET['products_id'])) {
+	//	tep_redirect(tep_href_link(FILENAME_DEFAULT));
+	//}
 	
 	require(DIR_WS_LANGUAGES . $language . '/' . FILENAME_PRODUCT_INFO);
-	
-	
-	$osC_Product = new osC_Product($_GET['products_id']);
-	
 	require(DIR_WS_INCLUDES . 'template_top.php');
 	
-	if ( $osC_Product->isValid() !== true ){
-	?>
-	
-	<div class="contentContainer">
-		<div class="contentText">
-			<div class="alert alert-warning"><?php echo TEXT_PRODUCT_NOT_FOUND; ?></div>
-		</div>
+	// PHP < 5.0.2; array_slice() does not preserve keys and will not work with numerical key values, so foreach() is used
+	foreach ($_GET as $key => $value) {
+		if ( (preg_match('/^[0-9]+(#?([0-9]+:?[0-9]+)+(;?([0-9]+:?[0-9]+)+)*)*$/', $key) || preg_match('/^[a-zA-Z0-9 -_]*$/', $key)) ) {
+			$id = $key;
+		}
 		
-		<div class="pull-right">
-			<?php echo tep_draw_button(IMAGE_BUTTON_CONTINUE, 'glyphicon glyphicon-chevron-right', tep_href_link(FILENAME_DEFAULT)); ?>
-		</div>
-	</div>
-	
-	<?php
-		} else {
+		break;
+	}
+	if (($id !== false) && osC_Product::checkEntry($id)) {
+		
+		$osC_Product = new osC_Product($id);	
 		
 		$osC_Product->incrementCounter();
 		
@@ -54,14 +46,14 @@
 		
 		$products_price .= '<meta itemprop="priceCurrency" content="' . tep_output_string($currency) . '" />';
 		
-		$products_name = '<a href="' . tep_href_link('product_info.php', 'products_id=' . $osC_Product->getMasterID()) . '" itemprop="url"><span itemprop="name">' . $osC_Product->getTitle() . '</span></a>';
+		$products_name = '<a href="' . tep_href_link('product_info.php', $osC_Product->getKeyword()) . '" itemprop="url"><span itemprop="name">' . $osC_Product->getTitle() . '</span></a>';
 		
 		if ( $osC_Product->hasModel() ) {
 			$products_name .= '<br><small>[<span itemprop="model">' . $osC_Product->getModel() . '</span>]</small>';
 		}
 	?>
 	
-	<?php echo tep_draw_form('cart_quantity', tep_href_link($PHP_SELF, tep_get_all_get_params(array('action')). 'action=add_product', 'NONSSL'), 'post', 'class="form-horizontal" role="form"'); ?>
+	<?php echo tep_draw_form('cart_quantity', tep_href_link($PHP_SELF, $osC_Product->getKeyword() . '&action=cart_add', 'NONSSL'), 'post', 'class="form-horizontal" role="form"'); ?>
 	
 	<div itemscope itemtype="http://schema.org/Product">
 		
@@ -90,7 +82,7 @@
 						$pi_total = $osC_Product->numberOfImages();
 						
 						if ($pi_total > 0) {
-
+							
 						?>
 						
 						<div class="piGal pull-right" data-imgcount="<?php echo $photoset_layout; ?>">
@@ -251,17 +243,32 @@
 </form>
 <?php
 	if ( $osC_Product->hasVariants() ) {
-?>
-<script>
-	var originalPrice = '<?php echo $osC_Product->getPriceFormated(true); ?>';
-	var productInfoNotAvailable = '<span id="productVariantCombinationNotAvailable">Not available in this combination. Please select another combination for your order.</span>';
-	var productInfoAvailability = '<?php if ( $osC_Product->hasAttribute('shipping_availability') ) { echo addslashes($osC_Product->getAttribute('shipping_availability')); } ?>';
+	?>
+	<script>
+		var originalPrice = '<?php echo $osC_Product->getPriceFormated(true); ?>';
+		var productInfoNotAvailable = '<span id="productVariantCombinationNotAvailable">Not available in this combination. Please select another combination for your order.</span>';
+		var productInfoAvailability = '<?php if ( $osC_Product->hasAttribute('shipping_availability') ) { echo addslashes($osC_Product->getAttribute('shipping_availability')); } ?>';
+		
+		refreshVariants();
+	</script>
 	
-	refreshVariants();
-</script>
+	<?php
+	}
+	}else {
+?>
+
+<div class="contentContainer">
+	<div class="contentText">
+		<div class="alert alert-warning"><?php echo TEXT_PRODUCT_NOT_FOUND; ?></div>
+	</div>
+	
+	<div class="pull-right">
+		<?php echo tep_draw_button(IMAGE_BUTTON_CONTINUE, 'glyphicon glyphicon-chevron-right', tep_href_link(FILENAME_DEFAULT)); ?>
+	</div>
+</div>
 
 <?php
-	}
+	
 }
 require(DIR_WS_INCLUDES . 'template_bottom.php');
 require(DIR_WS_INCLUDES . 'application_bottom.php');

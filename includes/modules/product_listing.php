@@ -9,7 +9,7 @@
 		
 		Released under the GNU General Public License
 	*/
-	
+
 	$listing_split = new splitPageResults($listing_sql, MAX_DISPLAY_SEARCH_RESULTS, 'p.products_id');
 	
 	// create column list
@@ -146,18 +146,22 @@
 				
 				$prod_list_contents .= '<div class="item list-group-item col-sm-4">';
 				$prod_list_contents .= '  <div class="productHolder equal-height">';
-				if (isset($_GET['manufacturers_id'])  && tep_not_null($_GET['manufacturers_id'])) {
-					$prod_list_contents .= '    <a href="' . tep_href_link(FILENAME_PRODUCT_INFO, 'manufacturers_id=' . $_GET['manufacturers_id'] . '&products_id=' . $osC_Product->getID()) . '">' . tep_image(DIR_WS_IMAGES . $osC_Product->getImage(), $osC_Product->getTitle(), SMALL_IMAGE_WIDTH, SMALL_IMAGE_HEIGHT, NULL, NULL, 'img-responsive thumbnail group list-group-image') . '</a>';
-					} else {
-					$prod_list_contents .= '    <a href="' . tep_href_link(FILENAME_PRODUCT_INFO, ($sort ? 'sort=' . $sort . '&' : '') . ($cPath ? 'cPath=' . $cPath . '&' : '') . 'products_id=' . $osC_Product->getID()) . '">' . tep_image(DIR_WS_IMAGES . $osC_Product->getImage(), $osC_Product->getTitle(), SMALL_IMAGE_WIDTH, SMALL_IMAGE_HEIGHT, NULL, NULL, 'img-responsive thumbnail group list-group-image') . '</a>';
+				
+				if (isset($_GET['manufacturers'])  && tep_not_null($_GET['manufacturers'])) {
+					$prod_list_contents .= '    <a href="' . tep_href_link(FILENAME_PRODUCT_INFO, $osC_Product->getKeyword() .'&manufacturers_id=' . $_GET['manufacturers']) . '">' . tep_image(DIR_WS_IMAGES . $osC_Product->getImage(), $osC_Product->getTitle(), SMALL_IMAGE_WIDTH, SMALL_IMAGE_HEIGHT, NULL, NULL, 'img-responsive thumbnail group list-group-image') . '</a>';
+				} else {
+					$prod_list_contents .= '    <a href="' . tep_href_link(FILENAME_PRODUCT_INFO, $osC_Product->getKeyword() . '&' .($sort ? 'sort=' . $sort . '&' : '') . ($cPath ? 'cPath=' . $cPath . '&' : '')) . '">' . tep_image(DIR_WS_IMAGES . $osC_Product->getImage(), $osC_Product->getTitle(), SMALL_IMAGE_WIDTH, SMALL_IMAGE_HEIGHT, NULL, NULL, 'img-responsive thumbnail group list-group-image') . '</a>';
 				}
+				
 				$prod_list_contents .= '    <div class="caption">';
 				$prod_list_contents .= '      <h2 class="group inner list-group-item-heading">';
-				if (isset($_GET['manufacturers_id']) && tep_not_null($_GET['manufacturers_id'])) {
-					$prod_list_contents .= '    <a href="' . tep_href_link(FILENAME_PRODUCT_INFO, 'manufacturers_id=' . $_GET['manufacturers_id'] . '&products_id=' . $osC_Product->getID()) . '">' . $osC_Product->getTitle() . '</a>';
-					} else {
-					$prod_list_contents .= '    <a href="' . tep_href_link(FILENAME_PRODUCT_INFO, ($cPath ? 'cPath=' . $cPath . '&' : '') . 'products_id=' . $osC_Product->getID()) . '">' . $osC_Product->getTitle() . '</a>';
+				
+				if (isset($_GET['manufacturers']) && tep_not_null($_GET['manufacturers'])) {
+					$prod_list_contents .= '    <a href="' . tep_href_link(FILENAME_PRODUCT_INFO,  $osC_Product->getKeyword() .'&manufacturers_id=' . $_GET['manufacturers'] ) . '">' . $osC_Product->getTitle() . '</a>';
+				} else {
+					$prod_list_contents .=  tep_link_object(tep_href_link(FILENAME_PRODUCT_INFO, $osC_Product->getKeyword() . ($cPath ? '&cPath=' . $cPath : '')), $osC_Product->getTitle()) . '&nbsp;';			
 				}
+				
 				$prod_list_contents .= '      </h2>';
 				
 				$prod_list_contents .= '      <p class="group inner list-group-item-text">' . strip_tags($osC_Product->getDescription(), '<br>') . '&hellip;</p><div class="clearfix"></div>';
@@ -180,12 +184,10 @@
 				}
 				
 				$prod_list_contents .= '      <div class="row">';
-				//if (tep_not_null($listing['specials_new_products_price'])) {
-				//	$prod_list_contents .= '      <div class="col-xs-6"><div class="btn-group" role="group"><button type="button" class="btn btn-default"><del>' .  $currencies->display_price($listing['products_price'], tep_get_tax_rate($listing['products_tax_class_id'])) . '</del></span>&nbsp;&nbsp;<span class="productSpecialPrice">' . $currencies->display_price($listing['specials_new_products_price'], tep_get_tax_rate($listing['products_tax_class_id'])) . '</button></div></div>';
-				//	} else {
-					$prod_list_contents .= '      <div class="col-xs-6"><div class="btn-group" role="group"><button type="button" class="btn btn-default">' . $osC_Product->getPriceFormated(true) . '</button></div></div>';
-				//}
-				$prod_list_contents .= '       <div class="col-xs-6 text-right">' . tep_draw_button(IMAGE_BUTTON_BUY_NOW, 'cart', tep_href_link(basename($PHP_SELF), tep_get_all_get_params(array('action', 'sort', 'cPath')) . 'action=buy_now&products_id=' . $osC_Product->getID()), NULL, NULL, 'btn-success btn-sm') . '</div>';
+
+				$prod_list_contents .= '      <div class="col-xs-6"><div class="btn-group" role="group"><button type="button" class="btn btn-default">' . $osC_Product->getPriceFormated(true) . '</button></div></div>';
+				$prod_list_contents .= '       <div class="col-xs-6 text-right">' . tep_draw_button(IMAGE_BUTTON_BUY_NOW, 'cart', tep_href_link(basename($PHP_SELF), $osC_Product->getKeyword() . '&' . tep_get_all_get_params(array('action')) . 'action=buy_now'), NULL, NULL, 'btn-success btn-sm') . '</div>';
+
 				$prod_list_contents .= '      </div>';
 				
 				$prod_list_contents .= '    </div>';
