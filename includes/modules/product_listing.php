@@ -186,7 +186,7 @@
 				$prod_list_contents .= '      <div class="row">';
 
 				$prod_list_contents .= '      <div class="col-xs-6"><div class="btn-group" role="group"><button type="button" class="btn btn-default">' . $osC_Product->getPriceFormated(true) . '</button></div></div>';
-				$prod_list_contents .= '       <div class="col-xs-6 text-right">' . tep_draw_button(IMAGE_BUTTON_BUY_NOW, 'cart', tep_href_link(basename($PHP_SELF), $osC_Product->getKeyword() . '&' . tep_get_all_get_params(array('action')) . 'action=buy_now'), NULL, NULL, 'btn-success btn-sm') . '</div>';
+                $prod_list_contents .= '       <div class="col-xs-6 text-right">' . tep_draw_button(IMAGE_BUTTON_BUY_NOW, 'cart', tep_href_link(basename($PHP_SELF), $osC_Product->getKeyword() . '&' . tep_get_all_get_params(array('action')) . '&action=cart_add'), NULL, NULL, 'btn-success btn-sm') . '</div>';
 
 				$prod_list_contents .= '      </div>';
 				
