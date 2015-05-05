@@ -70,7 +70,10 @@
 
     return $link;
   }
-
+  
+	function tep_link_object($link, $object, $parameters = null) {
+		return '<a href="' . $link . '"' . (!empty($parameters) ? ' ' . $parameters : '') . '>' . $object . '</a>';
+	}	
 ////
 // The HTML image wrapper function
   function tep_image($src, $alt = '', $width = '', $height = '', $parameters = '', $responsive = true, $bootstrap_css = '') {
