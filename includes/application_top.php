@@ -316,96 +316,19 @@
 	$messageStack = new messageStack;
 	
 	// Shopping cart actions
-	if (isset($_GET['action'])) {
+	if ( isset($_GET['action']) && !empty($_GET['action']) ) {
 		// redirect the customer to a friendly cookie-must-be-enabled page if cookies are disabled
 		if ($session_started == false) {
 			tep_redirect(tep_href_link(FILENAME_COOKIE_USAGE));
 		}
 		
-		if (DISPLAY_CART == 'true') {
-			$goto =  FILENAME_SHOPPING_CART;
-			$parameters = array('action', 'cPath', 'products_id', 'pid');
-			} else {
-			$goto = $PHP_SELF;
-			if ($_GET['action'] == 'buy_now') {
-				$parameters = array('action', 'pid', 'products_id');
-				} else {
-				$parameters = array('action', 'pid');
-			}
-		}
-		switch ($_GET['action']) {
-			// customer wants to update the product quantity in their shopping cart
-			case 'update_product' : 
-				
-				if ( isset($_POST['products']) && is_array($_POST['products']) && !empty($_POST['products']) ) {
-					foreach ( $_POST['products'] as $item_id => $quantity ) {
-					  if ( !is_numeric($item_id) || !is_numeric($quantity) ) {
-						return false;
-					}
+		include(DIR_WS_CLASSES . 'actions.php');
 
-					  $cart->update($item_id, $quantity);
-					}
-				}			
-				tep_redirect(tep_href_link($goto, tep_get_all_get_params($parameters)));
-			break;
-			
-			// customer adds a product from the products page
-			case 'add_product' :    
-			if (isset($_POST['products_id']) && is_numeric($_POST['products_id'])) {
-				
-				$osC_Product = new osC_Product($_POST['products_id']);			
-				
-				if ( $osC_Product->hasVariants() ) {
-					if ( isset($_POST['variants']) && is_array($_POST['variants']) && !empty($_POST['variants']) ) {
-						if ( $osC_Product->variantExists($_POST['variants']) ) {
-							$cart->add_cart($osC_Product->getProductVariantID($_POST['variants']));
-							
-							} else {
-							tep_redirect(tep_href_link(FILENAME_PRODUCT_INFO, 'products_id=' . $_GET['products_id']));
-							
-							return false;
-						}
-						
-						} else {
-						tep_redirect(tep_href_link(FILENAME_PRODUCT_INFO, 'products_id=' . $_GET['products_id']));
-						
-						return false;
-					}
-					} else {
-					$cart->add_cart($osC_Product->getID());
-				}
-			}
-			$messageStack->add_session('product_action', sprintf(PRODUCT_ADDED, tep_get_products_name((int)$_POST['products_id'])), 'success');
-			tep_redirect(tep_href_link($goto, tep_get_all_get_params($parameters)));
-			break;
-			
-			
-			// customer removes a product from their shopping cart
-			case 'remove_product' : if (isset($_GET['item_id'])) {
-				$cart->remove($_GET['item_id']);
-				//$messageStack->add_session('product_action', sprintf(PRODUCT_REMOVED, tep_get_products_name($_GET['products_id'])), 'warning');
-			}
-			tep_redirect(tep_href_link($goto, null));
-			break;
-			// performed by the 'buy now' button in product listings and review page
-			case 'buy_now' :        
-			if (isset($_GET['products_id']) && is_numeric($_GET['products_id'])) {
-				
-				$osC_Product = new osC_Product($_GET['products_id']);			
-				
-				if ( $osC_Product->hasVariants() ) {
-					
-					tep_redirect(tep_href_link(FILENAME_PRODUCT_INFO, 'products_id=' . $_GET['products_id']));
-					
-					return false;
-					
-					} else {
-					$cart->add_cart($osC_Product->getID());
-					$messageStack->add_session('product_action', sprintf(PRODUCT_ADDED, tep_get_products_name((int)$_GET['products_id'])), 'success');
-				}
-			}
-			tep_redirect(tep_href_link($goto, tep_get_all_get_params($parameters)));
-			break;
+		osC_Actions::parse($_GET['action']);
+		
+		/*
+		switch ($_GET['action']) {
+
 			case 'notify' :         if (tep_session_is_registered('customer_id')) {
 				if (isset($_GET['products_id'])) {
 					$notify = $_GET['products_id'];
@@ -453,9 +376,10 @@
 			}
 			tep_redirect(tep_href_link($goto, tep_get_all_get_params($parameters)));
 			break;
-		}
+		}	
+		*/
 	}
-	
+
 	// include the who's online functions
 	require(DIR_WS_FUNCTIONS . 'whos_online.php');
 	tep_update_whos_online();

@@ -38,7 +38,7 @@
 	if ($cart->count_contents() > 0) {
 	?>
 	
-	<?php echo tep_draw_form('cart_quantity', tep_href_link(FILENAME_SHOPPING_CART, 'action=update_product')); ?>
+	<?php echo tep_draw_form('cart_quantity', tep_href_link(FILENAME_SHOPPING_CART, 'action=cart_update')); ?>
 	
 	<div class="contentContainer">
 		<div class="contentText">
@@ -58,8 +58,8 @@
 							
 							$products_name .= '<tr>';
 							
-							$products_name .= '  <td valign="top" align="center"><a href="' . tep_href_link(FILENAME_PRODUCT_INFO, 'products_id=' . $products_id) . '">' . tep_image(DIR_WS_IMAGES . $products['image'], $products['name'], SMALL_IMAGE_WIDTH, SMALL_IMAGE_HEIGHT) . '</a></td>' .
-							'  <td valign="top"><a href="' . tep_href_link(FILENAME_PRODUCT_INFO, 'products_id=' . $products_id) . '"><strong>' . $products['name'] . '</strong></a>';
+							$products_name .= '  <td valign="top" align="center"><a href="' . tep_href_link(FILENAME_PRODUCT_INFO, $products['keyword']) . '">' . tep_image(DIR_WS_IMAGES . $products['image'], $products['name'], SMALL_IMAGE_WIDTH, SMALL_IMAGE_HEIGHT) . '</a></td>' .
+							'  <td valign="top"><a href="' . tep_href_link(FILENAME_PRODUCT_INFO, $products['keyword']) . '"><strong>' . $products['name'] . '</strong></a>';
 							
 							if (STOCK_CHECK == 'true') {
 								$stock_check = tep_check_stock($products_id, $products['quantity']);
@@ -75,7 +75,7 @@
 									$products_name .= '<br>- ' . $variant['group_title'] . ': ' . $variant['value_title'];
 								}
 							}
-							$products_name .= '<br>' . tep_draw_input_field('products[' . $products['item_id'] . ']', $products['quantity'], 'style="width: 65px;" min="0"', 'number') . ' ' . tep_draw_button(NULL, 'glyphicon glyphicon-refresh', NULL, NULL, NULL, 'btn-info btn-xs') . ' ' . tep_draw_button(NULL, 'glyphicon glyphicon-remove', tep_href_link(FILENAME_SHOPPING_CART, 'item_id=' . $products['item_id'] . '&action=remove_product'), NULL, NULL, 'btn-danger btn-xs');
+							$products_name .= '<br>' . tep_draw_input_field('products[' . $products['item_id'] . ']', $products['quantity'], 'style="width: 65px;" min="0"', 'number') . ' ' . tep_draw_button(NULL, 'glyphicon glyphicon-refresh', NULL, NULL, NULL, 'btn-info btn-xs') . ' ' . tep_draw_button(NULL, 'glyphicon glyphicon-remove', tep_href_link(FILENAME_SHOPPING_CART, 'action=cart_remove&item=' . $products['item_id']), NULL, NULL, 'btn-danger btn-xs');
 
 							$products_name .= '</td>';
 							
